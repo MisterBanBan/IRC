@@ -7,13 +7,12 @@
 #include <poll.h>
 #include <vector>
 #include <map>
+#include <unistd.h> //close
+#include "Client.hpp"
+#include "Channel.hpp"
+#include <sstream> //istringstream
 
-class Client
-{
-    public:
 
-    private:
-};
 
 class Server
 {
@@ -21,10 +20,17 @@ class Server
         Server(void);
         Server(const Server &other);
         void initServerSocket(const std::string port, const std::string ip);
+        void acceptNewClient();
+        void clientData(int client_fd);
+        void sendToClient(int client_fd, const std::string &reponse);
+        void removeClient(int client_fd);
+        void run();
         ~Server(void);
         Server &operator=(const Server &other);
     private:
         int _server_fd;
+        std::vector<struct pollfd> poll_fds;
+        std::map<std::string, Channel> channels;
         std::map<int, Client> _clients;
 };
 

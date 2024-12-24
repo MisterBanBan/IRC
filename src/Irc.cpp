@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Server.hpp"
 
 int main(int argc, char **argv)
 {
@@ -9,4 +10,9 @@ int main(int argc, char **argv)
     }
     std::string port = argv[2];
     std::string ip = argv[1];
+
+    Server server;
+    server.initServerSocket(port, ip);
+    server.run();
+    
 }
