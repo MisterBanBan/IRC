@@ -83,12 +83,12 @@ void Server::initServerSocket(const std::string port, const std::string ip)
         std::cout << "Error: F_SETFL failed" << std::endl;
         return;
     }
-    // poll_fds is used to store all file descriptors (sockets) that the server wants to monitor for events.
+    // _poll_fds is used to store all file descriptors (sockets) that the server wants to monitor for events.
     struct pollfd server_pollfd;
     server_pollfd.fd = _server_fd; //Assigns the server socket file descriptor (_server_fd) to the fd field of the pollfd structure.
     server_pollfd.events = POLLIN; // Sets the POLLIN event type: Indicates that we are monitoring read events.
     server_pollfd.revents = 0; //This field is used by poll() to indicate which events actually occurred.
-    poll_fds.push_back(server_pollfd); //This allows the server to detect when a new connection is ready to be accepted
+    _poll_fds.push_back(server_pollfd); //This allows the server to detect when a new connection is ready to be accepted
 }
 
 void Server::acceptNewClient()
@@ -122,7 +122,7 @@ void Server::acceptNewClient()
     server_pollfd.fd = client_fd;
     server_pollfd.events = POLLIN;
     server_pollfd.revents = 0;
-    poll_fds.push_back(server_pollfd);
+    _poll_fds.push_back(server_pollfd);
 
     Client new_client;
     new_client.fd = client_fd;
@@ -139,24 +139,24 @@ void Server::run()
     while (true)
     {
         //The poll() function monitors a set of file descriptors for events
-        //poll_fds.data() to the first element of the poll_fds vector, which contains the pollfd structures describing the file descriptors to monitor
-        int ret = poll(poll_fds.data(), poll_fds.size(), -1); // Timeout infini if ret < 0 error
+        //_poll_fds.data() to the first element of the _poll_fds vector, which contains the pollfd structures describing the file descriptors to monitor
+        int ret = poll(_poll_fds.data(), _poll_fds.size(), -1); // Timeout infini if ret < 0 error
         if(ret < 0)
         {
             std::cout << "Error: poll failde" << std::endl;
             break;
         }
-        for (size_t i = 0; i < poll_fds.size(); ++i)
+        for (size_t i = 0; i < _poll_fds.size(); ++i)
         {
-            if (poll_fds[i].revents & POLLIN)
+            if (_poll_fds[i].revents & POLLIN)
             {
-                if (poll_fds[i].fd == _server_fd)
+                if (_poll_fds[i].fd == _server_fd)
                 {
                     acceptNewClient();
                 } 
                 else 
                 {
-                    clientData(poll_fds[i].fd);
+                    clientData(_poll_fds[i].fd);
                 }
             }
         }
@@ -172,7 +172,11 @@ void Server::clientData(int client_fd)
     if (receive <= 0)
     {
         if (receive == 0)
+        {
             std::cout << "Clients disconnected" << client_fd << std::endl;
+            removeClient(client_fd);
+            return;
+        }
         else
         {
             std::cout << "Error: recv failed" << std::endl;
@@ -183,10 +187,14 @@ void Server::clientData(int client_fd)
 
     _clients[client_fd].buffer_in.append(buffer, receive);
     size_t pos;
-    while ((pos = _clients[client_fd].buffer_in.find("\r\n")) != std::string::npos)
+/*en attendant dtre sur un vrai hexchat  while ((pos = _clients[client_fd].buffer_in.find("\r\n")) != std::string::npos)
     {
         std::string command = _clients[client_fd].buffer_in.substr(0, pos);
-        _clients[client_fd].buffer_in.erase(0, pos + 2);
+        _clients[client_fd].buffer_in.erase(0, pos + 2);*/
+    while ((pos = _clients[client_fd].buffer_in.find("\n")) != std::string::npos)
+    {
+        std::string command = _clients[client_fd].buffer_in.substr(0, pos);
+        _clients[client_fd].buffer_in.erase(0, pos + 1);
 
         std::cout << "Command receive : " << command << std::endl;
 
@@ -218,18 +226,74 @@ void Server::clientData(int client_fd)
                 sendToClient(client_fd, response);
                 return;
             }
-            if (channels.find(channel_name) == channels.end())
+            if (_channels.find(channel_name) == _channels.end())
             {
-                Channel newChannel;
-                newChannel.
+                Channel newChannel(channel_name);
+                newChannel.addMember(client_fd);
+                _channels[channel_name] = newChannel;
+            }
+            else
+                _channels[channel_name].addMember(client_fd);
+
+            _clients[client_fd].channels.insert(channel_name);
+            std::string response = ":" + _clients[client_fd].nickname
+                         + " JOIN "
+                         + channel_name
+                         + "\r\n";
+            sendToClient(client_fd, response);
+        }
+        else if (cmd == "KICK")
+        {
+            std::string channel_name;
+            std::string target_nick;
+            std::string reason;
+            iss >> channel_name >> target_nick >> reason;
+            if(channel.empty() || target_nick.empty())
+            {
+                std::string response = "KICK :Not enough parameters";
+                sendToClient(client_fd, response);
+                return;
+            }
+            std::getline(iss, reason); 
+            if (!reason.empty())
+            {
+                if (reason[0] == ' ')
+                    reason.erase(0,1);
+            }
+            if (reason.empty())
+                reason = "No reason";
+            
+            if (_channels.find(channel_name) == _channels.end())
+            {
+                std::string response = "KICK :This channel doesn't exist";
+                sendToClient(client_fd, response);
+                return;
+            }
+            int target_fd = getFdByNickname(target_nick);
+            if (target_fd < 0)
+            {
+                sendToClient(client_fd, "KICK :No such nickname\r\n");
+                return;
+            }
+            if (_channels[channel_name].isMember(client_fd))
+            {
+                _channels[channel_name].removeMember(client_fd);
+                std::string response = ":" + target_nick
+                         + " KICK "
+                         + channel_name
+                         + "\r\n";
+                sendToClient(client_fd, response);
+                return;
             }
         }
-        
-        else if(cmd == "PART")
-        {
-
-        }
     }
+}
+
+int Server::getFdByNickname(const std::string target)
+{
+    int target_fd;
+    
+    if (_clients[])
 }
 
 void Server::sendToClient(int client_fd, const std::string &response)
@@ -246,11 +310,11 @@ void Server::removeClient(int client_fd)
     close(client_fd);
     _clients.erase(client_fd);
 
-    for (std::vector<struct pollfd>::iterator it = poll_fds.begin(); it != poll_fds.end(); ++it)
+    for (std::vector<struct pollfd>::iterator it = _poll_fds.begin(); it != _poll_fds.end(); ++it)
     {
         if (it->fd == client_fd)
         {
-            poll_fds.erase(it);
+            _poll_fds.erase(it);
             break;
         }
     }
@@ -259,8 +323,8 @@ void Server::removeClient(int client_fd)
 
 Server::~Server(void)
 {
-    for (size_t i = 0; i < poll_fds.size(); ++i)
-        close(poll_fds[i].fd);
+    for (size_t i = 0; i < _poll_fds.size(); ++i)
+        close(_poll_fds[i].fd);
 }
 
 Server &Server::operator=(const Server &other)
@@ -268,7 +332,7 @@ Server &Server::operator=(const Server &other)
     if (this != &other)
     {
         _server_fd = other._server_fd;
-        poll_fds = other.poll_fds;
+        _poll_fds = other._poll_fds;
         _clients = other._clients;
     }
     return(*this);

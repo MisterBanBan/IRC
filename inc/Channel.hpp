@@ -9,12 +9,13 @@ class Channel
 
     public:
         Channel(void);
+        Channel(const std::string &channelName);
         Channel(const Channel &other);
         ~Channel(void);
-        &operator=(const Channel &other);
+        Channel &operator=(const Channel &other);
         void addMember(int fd);
         void removeMember(int fd);
-        void isMember(int fd) const;
+        bool isMember(int fd) const;
         
     private:
         std::string _name;

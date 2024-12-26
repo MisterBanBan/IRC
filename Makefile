@@ -7,7 +7,8 @@ INC_DIR := inc
 
 # Liste des fichiers sources
 SRC := $(SRC_DIR)/Irc.cpp \
-       $(SRC_DIR)/Server.cpp
+       $(SRC_DIR)/Server.cpp \
+	   $(SRC_DIR)/Channel.cpp 
 
 # Génération des fichiers objets et des dépendances
 OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC))

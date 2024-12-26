@@ -24,13 +24,14 @@ class Server
         void clientData(int client_fd);
         void sendToClient(int client_fd, const std::string &reponse);
         void removeClient(int client_fd);
+        int getFdByNickname(const std::string target);
         void run();
         ~Server(void);
         Server &operator=(const Server &other);
     private:
         int _server_fd;
-        std::vector<struct pollfd> poll_fds;
-        std::map<std::string, Channel> channels;
+        std::vector<struct pollfd> _poll_fds;
+        std::map<std::string, Channel> _channels;
         std::map<int, Client> _clients;
 };
 
