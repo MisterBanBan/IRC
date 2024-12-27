@@ -248,7 +248,7 @@ void Server::clientData(int client_fd)
             std::string target_nick;
             std::string reason;
             iss >> channel_name >> target_nick >> reason;
-            if(channel.empty() || target_nick.empty())
+            if(channel_name.empty() || target_nick.empty())
             {
                 std::string response = "KICK :Not enough parameters";
                 sendToClient(client_fd, response);
@@ -275,25 +275,100 @@ void Server::clientData(int client_fd)
                 sendToClient(client_fd, "KICK :No such nickname\r\n");
                 return;
             }
-            if (_channels[channel_name].isMember(client_fd))
+            if (!_channels[channel_name].isMember(target_fd))
             {
-                _channels[channel_name].removeMember(client_fd);
-                std::string response = ":" + target_nick
-                         + " KICK "
-                         + channel_name
-                         + "\r\n";
+                sendToClient(client_fd, "KICK :Target not in channel\r\n");
+                return;
+            }
+            if (!_channels[channel_name].isMember(client_fd))
+            {
+                sendToClient(client_fd, "KICK :You are not in this channel\r\n");
+                return;
+            }
+            _channels[channel_name].removeMember(target_fd);
+            _clients[target_fd].channels.erase(channel_name);
+            std::string kicker_nick = _clients[client_fd].nickname;
+            std::stringstream msg;
+            msg << ":" << kicker_nick
+                << " KICK " << channel_name
+                << " "     << target_nick
+                << " :"    << reason
+                << "\r\n";
+            broadcastToChannel(channel_name, msg.str());
+            sendToClient(target_fd, msg.str());
+        }
+        else if(cmd == "PART")
+        {
+            std::string channel_name;
+            std::string reason;
+            if(channel_name.empty())
+            {
+                std::string response = "PART :Not enough parameters";
                 sendToClient(client_fd, response);
                 return;
             }
+            std::getline(iss, reason); 
+            if (!reason.empty())
+            {
+                if (reason[0] == ' ')
+                    reason.erase(0,1);
+            }
+            if (reason.empty())
+                reason = "No reason";
+            if (_channels.find(channel_name) == _channels.end())
+            {
+                std::string response = "PART :This channel doesn't exist";
+                sendToClient(client_fd, response);
+                return;
+            }
+            if (!_channels[channel_name].isMember(target_fd))
+            {
+                sendToClient(client_fd, "PART :Target not in channel\r\n");
+                return;
+            }
+            _channels[channel_name].removeMember(target_fd);
+            _clients[target_fd].channels.erase(channel_name);
+            std::string part_nick = _clients[client_fd].nickname;
+            std::stringstream msg;
+            msg << ":" << part_nick
+                << " JOIN " << channel_name
+                << " "     << part_nick
+                << " :"    << reason
+                << "\r\n";
+            broadcastToChannel(channel_name, msg.str());
+            sendToClient(target_fd, msg.str());
         }
     }
+}
+
+void Server::broadcastToChannel(const std::string &channel_name, const std::string &message)
+{
+    if(_channels.find(channel_name) == _channels.end())
+        return ;
+
+    std::set<int> members = _channels[channel_name].getMembers();
+    for (std::set<int>::iterator it = members.begin(); it != members.end(); ++it)
+        sendToClient(it, message);
 }
 
 int Server::getFdByNickname(const std::string target)
 {
     int target_fd;
     
-    if (_clients[])
+    for (std::map<int, Client>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if (it->second.getNickname() == target)
+            return it->first;
+    }
+    return -1;
+}
+
+std::string Server::getNickname(int clientFd) const
+{
+    std::map<int, Client>::const_iterator it = _clients.find(clientFd);
+    if (it == _clients.end())
+        return "";
+    return it->second.getNickname();
 }
 
 void Server::sendToClient(int client_fd, const std::string &response)
