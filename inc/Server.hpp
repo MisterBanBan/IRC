@@ -25,8 +25,9 @@ class Server
         void sendToClient(int client_fd, const std::string &reponse);
         void removeClient(int client_fd);
         int getFdByNickname(const std::string target);
-        std::set<int> getMembers() const { return _members; }
+        std::string getNickname(int clientFd) const;
         void broadcastToChannel(const std::string &channel_name, const std::string &message);
+        void sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
         void run();
         ~Server(void);
         Server &operator=(const Server &other);

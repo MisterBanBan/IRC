@@ -13,6 +13,7 @@ class Channel
         Channel(const Channel &other);
         ~Channel(void);
         Channel &operator=(const Channel &other);
+        const std::set<int>& getMembers() const;
         void addMember(int fd);
         void removeMember(int fd);
         bool isMember(int fd) const;

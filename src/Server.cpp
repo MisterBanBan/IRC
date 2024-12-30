@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "Client.hpp"
 #include <arpa/inet.h>
+#include <sstream>
 
 Server::Server(void) { }
 
@@ -208,12 +209,72 @@ void Server::clientData(int client_fd)
             iss >> nickname;
             if (nickname.empty())
             {
-                std::string response = "Error: No nickname given\r\n";
+                std::string response = "431 :No nickname given\r\n";
                 sendToClient(client_fd, response);
                 continue;
             }
+            if (_clients[client_fd].is_authenticated || !_clients[client_fd].nickname.empty())
+            {
+                std::string response = "462 :You are already registered\r\n";
+                sendToClient(client_fd, response);
+                return;
+            }
+            int target_fd = getFdByNickname(nickname);
+            if (target_fd > 0)
+            {
+                sendToClient(client_fd, "NICK :Your nickname already exist\r\n");
+                return;
+            }
             _clients[client_fd].nickname = nickname;
+            if (!_clients[client_fd].user.empty())
+            {
+                _clients[client_fd].is_authenticated = true;
+                sendToClient(client_fd, ":server 001 " + _clients[client_fd].nickname + " :Welcome!\r\n");
+            }
+            else
+                sendToClient(client_fd, ":server NOTICE * :Please set your USER\r\n");
             std::string response = "Nickname set to " + nickname + "\r\n";
+            sendToClient(client_fd, response);
+        }
+        else if (cmd == "USER")
+        {
+            std::string user;
+            std::string realname;
+            iss >> user;
+            if (user.empty())
+            {
+                std::string response = "Error: No user given\r\n";
+                sendToClient(client_fd, response);
+                continue;
+            }
+            std::getline(iss, realname);
+            if (!realname.empty())
+            {
+                while (!realname.empty() && (realname[0] == ' ' || realname[0] == ':'))
+                    realname.erase(0, 1);
+            }
+            else   
+                realname = "Unknow";
+            if (_clients[client_fd].is_authenticated || !_clients[client_fd].user.empty())
+            {
+                std::string response = "462 :You are already registered\r\n";
+                sendToClient(client_fd, response);
+                return;
+            }
+            _clients[client_fd].user = user;
+            _clients[client_fd].realname = realname;
+            if (!_clients[client_fd].nickname.empty())
+            {
+                _clients[client_fd].is_authenticated = true;
+                sendToClient(client_fd, ":server 001 " + _clients[client_fd].nickname + " :Welcome!\r\n");
+            }
+            else
+                sendToClient(client_fd, ":server NOTICE * :Please set your NICK\r\n");
+            std::stringstream ss;
+            ss << "USER command from FD " << client_fd 
+            << " => username: " << _clients[client_fd].user
+            << ", realname: " << _clients[client_fd].realname;
+            std::string response = ss.str() + "\r\n";
             sendToClient(client_fd, response);
         }
         else if (cmd == "JOIN")
@@ -303,7 +364,7 @@ void Server::clientData(int client_fd)
             std::string reason;
             if(channel_name.empty())
             {
-                std::string response = "PART :Not enough parameters";
+                std::string response = "461 PART :Not enough parameters\r\n";
                 sendToClient(client_fd, response);
                 return;
             }
@@ -317,27 +378,88 @@ void Server::clientData(int client_fd)
                 reason = "No reason";
             if (_channels.find(channel_name) == _channels.end())
             {
-                std::string response = "PART :This channel doesn't exist";
+                std::string response = "403 " + channel_name + " :No such channel\r\n";
                 sendToClient(client_fd, response);
                 return;
             }
-            if (!_channels[channel_name].isMember(target_fd))
+            if (!_channels[channel_name].isMember(client_fd))
             {
-                sendToClient(client_fd, "PART :Target not in channel\r\n");
+                sendToClient(client_fd, "442 " + channel_name + " :You're not on that channel\r\n");
                 return;
             }
-            _channels[channel_name].removeMember(target_fd);
-            _clients[target_fd].channels.erase(channel_name);
+            _channels[channel_name].removeMember(client_fd);
+            _clients[client_fd].channels.erase(channel_name);
             std::string part_nick = _clients[client_fd].nickname;
             std::stringstream msg;
             msg << ":" << part_nick
-                << " JOIN " << channel_name
+                << " PART " << channel_name
                 << " "     << part_nick
                 << " :"    << reason
                 << "\r\n";
             broadcastToChannel(channel_name, msg.str());
-            sendToClient(target_fd, msg.str());
+            sendToClient(client_fd, msg.str());
         }
+        else if (cmd == "PRIVMSG")
+        {
+            std::string target;
+            iss >> target;
+            if (target.empty())
+            {
+                std::string response = "411 PRIVMSG :No recipient given\r\n";
+                sendToClient(client_fd, response);
+                return;
+            }
+            std::string msg;
+            std::getline(iss, msg);
+            while (!msg.empty() && (msg[0] == ' ' || msg[0] == ':'))
+                msg.erase(0, 1);
+            if (msg.empty())
+            {
+                sendToClient(client_fd, "412 PRIVMSG :No text to send\r\n");
+                continue;
+            }
+            sendPrivateMessage(client_fd, target, msg);
+        }
+    }
+}
+
+void Server::sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg)
+{
+    if (target[0] == '#')
+    {
+        if (_channels.find(target) == _channels.end())
+        {
+            sendToClient(client_fd, "403 " + target + " :No such channel\r\n");
+            return;
+        }
+        if (!_channels[target].isMember(client_fd))
+        {
+            sendToClient(client_fd, "442 " + target + " :You're not on that channel\r\n");
+            return;
+        }
+        std::string nick_sender = getNickname(client_fd);
+        std::string msg_formatted = ":" + nick_sender + " PRIVMSG " + target + " : " + msg + "\r\n";
+
+        for (std::set<int>::iterator it = _channels[target].getMembers().begin(); it != _channels[target].getMembers().end(); ++it)
+        {
+            int member_fd = *it;
+            if (member_fd != client_fd)
+                sendToClient(client_fd, msg_formatted);
+        }
+        return ;
+    }
+    else
+    {
+        int target_fd = getFdByNickname(target);
+        if (target_fd < 0)
+        {
+            sendToClient(client_fd, "401 " + target + " :No such nick\r\n");
+            return;
+        }
+        std::string nick_sender = getNickname(client_fd);
+        std::string msg_formatted = ":" + nick_sender + " PRIVMSG " + target + " : " + msg + "\r\n";
+        sendToClient(client_fd, msg_formatted);
+        return;
     }
 }
 
@@ -348,13 +470,11 @@ void Server::broadcastToChannel(const std::string &channel_name, const std::stri
 
     std::set<int> members = _channels[channel_name].getMembers();
     for (std::set<int>::iterator it = members.begin(); it != members.end(); ++it)
-        sendToClient(it, message);
+        sendToClient(*it, message);
 }
 
 int Server::getFdByNickname(const std::string target)
 {
-    int target_fd;
-    
     for (std::map<int, Client>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
         if (it->second.getNickname() == target)

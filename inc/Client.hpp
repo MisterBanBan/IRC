@@ -11,10 +11,13 @@ class Client
         std::string buffer_in;
         std::string buffer_out;
         std::string nickname;
+        std::string user;
+        std::string realname;
         bool is_authenticated;
         std::string ip;
         int port;
         std::set<std::string> channels;
+        std::string getNickname() const { return nickname; }
     private:
 };
 
