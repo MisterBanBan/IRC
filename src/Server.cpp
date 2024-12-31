@@ -444,7 +444,7 @@ void Server::sendPrivateMessage(int client_fd, const std::string &target, const 
         {
             int member_fd = *it;
             if (member_fd != client_fd)
-                sendToClient(client_fd, msg_formatted);
+                sendToClient(member_fd, msg_formatted);
         }
         return ;
     }
@@ -458,7 +458,7 @@ void Server::sendPrivateMessage(int client_fd, const std::string &target, const 
         }
         std::string nick_sender = getNickname(client_fd);
         std::string msg_formatted = ":" + nick_sender + " PRIVMSG " + target + " : " + msg + "\r\n";
-        sendToClient(client_fd, msg_formatted);
+        sendToClient(target_fd, msg_formatted);
         return;
     }
 }
