@@ -277,6 +277,31 @@ void Server::clientData(int client_fd)
             std::string response = ss.str() + "\r\n";
             sendToClient(client_fd, response);
         }
+        else if (cmd == "PASS")
+        {
+            std::string pass;
+            iss >> pass;
+            if (pass.empty())
+            {
+                std::string response = "461 PASS :Not enough parameters\r\n";
+                sendToClient(client_fd, response);
+                continue;
+            }
+            if (_clients[client_fd].is_authenticated)
+            {
+                sendToClient(client_fd, "462 :You are already registered\r\n");
+                continue;
+            }
+            if (!isCorrectPasswordServer(pass))
+            {
+                std::string response = "464 :Password incorrect\r\n";
+                sendToClient(client_fd, response);
+                removeClient(client_fd);
+                continue;
+            }
+            std::string response = "NOTICE * :Password accepted\r\n";
+            sendToClient(client_fd, response);
+        }
         else if (cmd == "JOIN")
         {
             std::string channel_name;
@@ -415,10 +440,73 @@ void Server::clientData(int client_fd)
                 msg.erase(0, 1);
             if (msg.empty())
             {
-                sendToClient(client_fd, "412 PRIVMSG :No text to send\r\n");
+                std::string response = "412 PRIVMSG :No text to send\r\n";
+                sendToClient(client_fd, response);
                 continue;
             }
             sendPrivateMessage(client_fd, target, msg);
+        }
+        else if (cmd == "TOPIC")
+        {
+            std::string name_channel;
+            iss >> name_channel;
+            if (name_channel.empty())
+            {
+                std::string response = "461 TOPIC :No recipient given\r\n";
+                sendToClient(client_fd, response);
+                continue;
+            }
+            std::string topic;
+            std::getline(iss, topic);
+            if (!topic.empty() && (topic[0] == ' ' || topic[0] == ':'))
+                topic.erase(0, 1);
+            if (_channels.find(name_channel) == _channel.end())
+            {
+                std::string response = "403 " + name_channel + "TOPIC :No such channel\r\n";
+                sendToClient(client_fd, response);
+                continue;
+            }
+            if (!_channels[name_channel].isMember(client_fd))
+            {
+                std::string response = "442 " + name_channel + "TOPIC :You're not on that channel\r\n";
+                sendToClient(client_fd, response);
+                continue;
+            }
+            //check if is operator +t
+            if (topic.empty())
+            {
+                std::string top = _channels[name_channel].getTopic();
+                if (top.empty())
+                {
+                    std::string response = "331 " + name_channel + "TOPIC :No topic is set\r\n";
+                    sendToClient(client_fd, response);
+                }
+                else
+                {
+                    std::string response = "331 " + name_channel + " :" + t + "\r\n";
+                    sendToClient(client_fd, response);
+                }
+            }
+            else
+            {
+                _channels[name_channel].setTopic();
+                std::string msg = ":" + getNickname(client_fd) + " TOPIC " + channelName + " :" + topic + "\r\n";
+                broadcastToChannel(channelName, msg);
+            }
+
+        }
+        else if (cmd == "INVITE")
+        {
+
+        }
+        else if (cmd == "MODE")
+        {
+
+        }
+        else
+        {
+            std::string response = "421 " + cmd + " :Unknown command\r\n";
+            sendToClient(client_fd, response);
         }
     }
 }

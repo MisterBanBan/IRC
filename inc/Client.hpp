@@ -13,6 +13,7 @@ class Client
         std::string nickname;
         std::string user;
         std::string realname;
+        std::string pass;
         bool is_authenticated;
         std::string ip;
         int port;

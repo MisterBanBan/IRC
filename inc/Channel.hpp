@@ -17,6 +17,8 @@ class Channel
         void addMember(int fd);
         void removeMember(int fd);
         bool isMember(int fd) const;
+        std::string getTopic() const;
+        void setTopic(const std::string &topic);
         
     private:
         std::string _name;
