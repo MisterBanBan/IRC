@@ -45,9 +45,9 @@ const std::set<int>& Channel::getMembers() const
     return _members;
 }
 
-std::string Channel:getTopic() const
+std::string Channel::getTopic() const
 {
-    return _topic;
+    return _topics;
 }
 
 void Channel::setTopic(const std::string &topic)

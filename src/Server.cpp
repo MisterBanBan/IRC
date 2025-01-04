@@ -277,7 +277,7 @@ void Server::clientData(int client_fd)
             std::string response = ss.str() + "\r\n";
             sendToClient(client_fd, response);
         }
-        else if (cmd == "PASS")
+        /*else if (cmd == "PASS")
         {
             std::string pass;
             iss >> pass;
@@ -301,7 +301,7 @@ void Server::clientData(int client_fd)
             }
             std::string response = "NOTICE * :Password accepted\r\n";
             sendToClient(client_fd, response);
-        }
+        }*/
         else if (cmd == "JOIN")
         {
             std::string channel_name;
@@ -460,7 +460,7 @@ void Server::clientData(int client_fd)
             std::getline(iss, topic);
             if (!topic.empty() && (topic[0] == ' ' || topic[0] == ':'))
                 topic.erase(0, 1);
-            if (_channels.find(name_channel) == _channel.end())
+            if (_channels.find(name_channel) == _channels.end())
             {
                 std::string response = "403 " + name_channel + "TOPIC :No such channel\r\n";
                 sendToClient(client_fd, response);
@@ -483,15 +483,15 @@ void Server::clientData(int client_fd)
                 }
                 else
                 {
-                    std::string response = "331 " + name_channel + " :" + t + "\r\n";
+                    std::string response = "331 " + name_channel + " :" + top + "\r\n";
                     sendToClient(client_fd, response);
                 }
             }
             else
             {
-                _channels[name_channel].setTopic();
-                std::string msg = ":" + getNickname(client_fd) + " TOPIC " + channelName + " :" + topic + "\r\n";
-                broadcastToChannel(channelName, msg);
+                _channels[name_channel].setTopic(topic);
+                std::string msg = ":" + getNickname(client_fd) + " TOPIC " + name_channel + " :" + topic + "\r\n";
+                broadcastToChannel(name_channel, msg);
             }
 
         }
