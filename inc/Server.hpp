@@ -11,6 +11,9 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 #include <sstream> //istringstream
+#include <stdlib.h> //atoi
+#include <cstring> //memset
+#include <cerrno>
 
 
 
@@ -19,7 +22,7 @@ class Server
     public:
         Server(void);
         Server(const Server &other);
-        void initServerSocket(const std::string port, const std::string ip);
+        void initServerSocket(const std::string port, const std::string);
         void acceptNewClient();
         void clientData(int client_fd);
         void sendToClient(int client_fd, const std::string &reponse);
@@ -28,6 +31,7 @@ class Server
         std::string getNickname(int clientFd) const;
         void broadcastToChannel(const std::string &channel_name, const std::string &message);
         void sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
+        bool isCorrectPasswordServer(const std::string &pass);
         void run();
         ~Server(void);
         Server &operator=(const Server &other);
@@ -36,6 +40,7 @@ class Server
         std::vector<struct pollfd> _poll_fds;
         std::map<std::string, Channel> _channels;
         std::map<int, Client> _clients;
+        std::string _serverPassword;
 };
 
 #endif

@@ -10,7 +10,7 @@ Server::Server(const Server &other)
     *this = other;
 }
 
-void Server::initServerSocket(const std::string port, const std::string ip)
+void Server::initServerSocket(const std::string port, const std::string pass)
 {
     if (port != "6667")
     {
@@ -23,6 +23,13 @@ void Server::initServerSocket(const std::string port, const std::string ip)
         std::cout << "Error: Convert port failed" << std::endl;
         return ;
     }
+    if (pass.empty())
+    {
+        std::cout << "Error: Password is empty" << std::endl;
+        return ;
+    }
+    else
+        this->_serverPassword = pass;
     //It creates a socket using the protocol IPV4 and a socket orient connexion SOCK_STREAM
     //Concretely, socket() returns a file descriptor (an integer) which identifies this new socket
     //listen on one port
@@ -46,7 +53,7 @@ void Server::initServerSocket(const std::string port, const std::string ip)
     memset(&serv_addr, 0, sizeof(serv_addr)); //filling with zeros
     serv_addr.sin_family = AF_INET; //to use familly adress IPV4
     //serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); //INADDR_ANY correspond to 0.0.0.0 the server will listen on all available network interfaces convert from host format to network format (little-endian" (the least significant byte is stored first)) big-endian » (high-order byte is stored first) TCP/IP “network byte order”, which is big-endian.
-    if (ip == "0.0.0.0")
+    /*if (ip == "0.0.0.0")
     {
         serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     } 
@@ -58,7 +65,7 @@ void Server::initServerSocket(const std::string port, const std::string ip)
             close(_server_fd);
             exit(EXIT_FAILURE);
         }
-    }
+    }*/
     serv_addr.sin_port = htons(portInt); //the same thing but is to 16 bits
     // bind "attach" the socket to a port on the machine a socket has no address or port defined, and therefore cannot receive connections
     if (bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
@@ -277,7 +284,7 @@ void Server::clientData(int client_fd)
             std::string response = ss.str() + "\r\n";
             sendToClient(client_fd, response);
         }
-        /*else if (cmd == "PASS")
+        else if (cmd == "PASS")
         {
             std::string pass;
             iss >> pass;
@@ -289,19 +296,19 @@ void Server::clientData(int client_fd)
             }
             if (_clients[client_fd].is_authenticated)
             {
-                sendToClient(client_fd, "462 :You are already registered\r\n");
+                sendToClient(client_fd, "462 PASS:You are already registered\r\n");
                 continue;
             }
             if (!isCorrectPasswordServer(pass))
             {
-                std::string response = "464 :Password incorrect\r\n";
+                std::string response = "464 PASS:Password incorrect\r\n";
                 sendToClient(client_fd, response);
-                removeClient(client_fd);
+                //removeClient(client_fd);
                 continue;
             }
             std::string response = "NOTICE * :Password accepted\r\n";
             sendToClient(client_fd, response);
-        }*/
+        }
         else if (cmd == "JOIN")
         {
             std::string channel_name;
@@ -547,9 +554,8 @@ void Server::clientData(int client_fd)
             }
             if (modes.empty())
             {
-                std::string response = "-i Set/Remove Channel to Invite Only \r\n -t : Set/remove TOPIC command restrictions for channel operators \r\n -k: Set/delete channel key (password) \r\n -o: Grant/withdraw channel operator privilege \r\n -l : Set/remove user limit for channel";
-                sendToClient(client_fd, response);
-                std::string response = "324 " + channelName + "MODE + (some modes)\r\n";
+                std::string mode = "-i Set/Remove Channel to Invite Only \r\n -t : Set/remove TOPIC command restrictions for channel operators \r\n -k: Set/delete channel key (password) \r\n -o: Grant/withdraw channel operator privilege \r\n -l : Set/remove user limit for channel";
+                std::string response = mode + "324 " + channelName + "MODE + (some modes)\r\n";
                 sendToClient(client_fd, response);
                 continue;
             }
@@ -602,6 +608,13 @@ void Server::sendPrivateMessage(int client_fd, const std::string &target, const 
         sendToClient(target_fd, msg_formatted);
         return;
     }
+}
+
+bool Server::isCorrectPasswordServer(const std::string &pass)
+{
+    if (pass == this->_serverPassword)
+        return true;
+    return false;
 }
 
 void Server::broadcastToChannel(const std::string &channel_name, const std::string &message)
