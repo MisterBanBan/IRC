@@ -209,7 +209,7 @@ void Server::clientData(int client_fd)
         std::istringstream iss(command);
         std::string cmd;
         iss >> cmd;
-
+        // regarder si luser a un # dans sont nom
         if (cmd == "NICK")
         {
             std::string nickname;
@@ -538,24 +538,43 @@ void Server::clientData(int client_fd)
         }
         else if (cmd == "MODE")
         {
-            std::string channelName, modes;
-            iss >> channelName >> modes;
-            if (channelName.empty())
+            std::string channelorUser, modes;
+            iss >> channelorUser >> modes;
+            if (channelorUser.empty())
             {
                 std::string response = "461 MODE :Not enough parameters\r\n";
                 sendToClient(client_fd, response);
                 continue;
             }
-            if (_channels.find(channelName) == _channels.end())
+            if (channelorUser[0] == '#')
             {
-                std::string response = "403 " + channelName + "MODE :No such channel\r\n";
-                sendToClient(client_fd, response);
-                continue;
+                if (_channels.find(channelorUser) == _channels.end())
+                {
+                    std::string response = "403 " + channelorUser + "MODE :No such channel\r\n";
+                    sendToClient(client_fd, response);
+                    continue;
+                }
+            }
+            else
+            {
+                int target = getFdByNickname(channelorUser);
+                if (target < 0)
+                {
+                    std::string response = "401 " + channelorUser + "MODE :No such nick\r\n";
+                    sendToClient(client_fd, response);
+                    continue;
+                }
+                if (_clients.find(target) == _clients.end())
+                {
+                    std::string response = "403 " + channelorUser + "MODE :No such channel\r\n";
+                    sendToClient(client_fd, response);
+                    continue;
+                }
             }
             if (modes.empty())
             {
                 std::string mode = "-i Set/Remove Channel to Invite Only \r\n -t : Set/remove TOPIC command restrictions for channel operators \r\n -k: Set/delete channel key (password) \r\n -o: Grant/withdraw channel operator privilege \r\n -l : Set/remove user limit for channel";
-                std::string response = mode + "324 " + channelName + "MODE + (some modes)\r\n";
+                std::string response = mode + "324 " + channelorUser + "MODE + (some modes)\r\n";
                 sendToClient(client_fd, response);
                 continue;
             }
