@@ -54,3 +54,13 @@ void Channel::setTopic(const std::string &topic)
 {
     this->_topics = topic;
 }
+
+void Channel::inviteUser(int fd)
+{
+    this->_inviteUser.insert(fd);
+}
+
+bool Channel::isInvite(int fd)
+{
+    return (_inviteUser.find(fd) != _inviteUser.end());
+}

@@ -212,6 +212,7 @@ void Server::clientData(int client_fd)
         // regarder si luser a un # dans sont nom
         if (cmd == "NICK")
         {
+            //rajouter le pass
             std::string nickname;
             iss >> nickname;
             if (nickname.empty())
@@ -315,7 +316,7 @@ void Server::clientData(int client_fd)
             iss >> channel_name;
             if (channel_name.empty())
             {
-                std::string response = "JOIN :Not enough parameters";
+                std::string response = "JOIN :Not enough parameters\r\n";
                 sendToClient(client_fd, response);
                 return;
             }
@@ -336,10 +337,19 @@ void Server::clientData(int client_fd)
                         std::string pass;
                         iss >> pass;
                         if (_channels[channel_name].key == pass)
-                             _channels[channel_name].addMember(client_fd);
+                        {
+                            if (_channels[channel_name].limitUser == false || _channels[channel_name].userLimit > getNbUser(client_fd, channel_name)) 
+                                _channels[channel_name].addMember(client_fd);
+                            else
+                            {
+                                std::string response = "JOIN :This channel has reached its limit\r\n";
+                                sendToClient(client_fd, response);
+                                return;
+                            }
+                        }
                         else
                         {
-                            std::string response = "JOIN :This channel needs a key ex: JOIN #channel <key>";
+                            std::string response = "JOIN :This channel needs a key ex: JOIN #channel <key>\r\n";
                             sendToClient(client_fd, response);
                             return;
                         }
@@ -347,7 +357,8 @@ void Server::clientData(int client_fd)
                 }
                 else
                 {
-                    std::string response = "JOIN :This channel " + channel_name + " is INVITE only";
+                    //ici faire linvitation si luser est deja inviter
+                    std::string response = "JOIN :This channel " + channel_name + " is INVITE only\r\n";
                     sendToClient(client_fd, response);
                     return;
                 }
@@ -361,13 +372,14 @@ void Server::clientData(int client_fd)
         }
         else if (cmd == "KICK")
         {
+            //il faut avoir les droits
             std::string channel_name;
             std::string target_nick;
             std::string reason;
             iss >> channel_name >> target_nick >> reason;
             if(channel_name.empty() || target_nick.empty())
             {
-                std::string response = "KICK :Not enough parameters";
+                std::string response = "KICK :Not enough parameters\r\n";
                 sendToClient(client_fd, response);
                 return;
             }
@@ -382,7 +394,7 @@ void Server::clientData(int client_fd)
             
             if (_channels.find(channel_name) == _channels.end())
             {
-                std::string response = "KICK :This channel doesn't exist";
+                std::string response = "KICK :This channel doesn't exist\r\n";
                 sendToClient(client_fd, response);
                 return;
             }
@@ -479,6 +491,7 @@ void Server::clientData(int client_fd)
         }
         else if (cmd == "TOPIC")
         {
+            //si le topic nest pas locked
             std::string name_channel;
             iss >> name_channel;
             if (name_channel.empty())
@@ -528,6 +541,7 @@ void Server::clientData(int client_fd)
         }
         else if (cmd == "INVITE")
         {
+            //rajouter les invitations
             std::string nickname, channelName;
             iss >> nickname >> channelName;
             if (nickname.empty() || channelName.empty())

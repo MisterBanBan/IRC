@@ -17,6 +17,8 @@ class Channel
         void addMember(int fd);
         void removeMember(int fd);
         bool isMember(int fd) const;
+        void inviteUser(int fd);
+        bool isInvite(int fd);
         std::string getTopic() const;
         void setTopic(const std::string &topic);
         bool inviteOnly; //+i
@@ -32,6 +34,7 @@ class Channel
         std::string _name;
         std::set<int> _members;
         std::string _topics;
+        std::set<int> _inviteUser;
 };
 
 #endif
