@@ -32,6 +32,8 @@ class Server
         void broadcastToChannel(const std::string &channel_name, const std::string &message);
         void sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
         bool isCorrectPasswordServer(const std::string &pass);
+        bool isOperator(int client_fd, const std::string &channel);
+        size_t getNbUser(int client_fd, const std::string &channel);
         void run();
         ~Server(void);
         Server &operator=(const Server &other);

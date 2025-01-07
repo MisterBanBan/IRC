@@ -18,6 +18,7 @@ class Client
         std::string ip;
         int port;
         std::set<std::string> channels;
+        
         std::string getNickname() const { return nickname; }
     private:
 };

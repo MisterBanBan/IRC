@@ -19,6 +19,14 @@ class Channel
         bool isMember(int fd) const;
         std::string getTopic() const;
         void setTopic(const std::string &topic);
+        bool inviteOnly; //+i
+        bool topicLocked; //+t
+        bool hasKey; //+k
+        std::string key;
+        bool limitUser; //+l
+        int userLimit;
+
+        std::set<int> operators; //+o
         
     private:
         std::string _name;
