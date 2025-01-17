@@ -5,7 +5,6 @@ BUILD_DIR := .build
 DEPS_DIR := .deps
 INC_DIR := inc
 
-#yes
 # Liste des fichiers sources
 SRC := $(SRC_DIR)/Irc.cpp \
        $(SRC_DIR)/Server.cpp \
