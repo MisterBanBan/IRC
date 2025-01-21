@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
+/*   Updated: 2025/01/17 12:43:53 by mbaron-t         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "Server.hpp"
 #include "Client.hpp"
 #include <arpa/inet.h>
@@ -10,23 +22,25 @@ Server::Server(const Server &other)
     *this = other;
 }
 
-void Server::initServerSocket(const std::string port, const std::string pass)
+int	Server::initServerSocket(const std::string & port, const std::string & pass)
 {
     if (port != "6667")
     {
         std::cout << "<port> is 6667" << std::endl;
-        return ;
+        return 1;
     }
-    int portInt = atoi(port.c_str());
-    if (portInt == 0)
+
+	char *end;
+    int portInt = strtol(port.c_str(), &end, 10);
+    if (*end != '\0')
     {
         std::cout << "Error: Convert port failed" << std::endl;
-        return ;
+        return 1;
     }
     if (pass.empty())
     {
         std::cout << "Error: Password is empty" << std::endl;
-        return ;
+        return 1;
     }
     else
         this->_serverPassword = pass;
@@ -36,14 +50,18 @@ void Server::initServerSocket(const std::string port, const std::string pass)
     _server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_server_fd < 0)
     {
-        std::cout << "Error: Socket failed" << std::endl;
-        exit(1);
+        std::cout << "Error: Socket failed (" << errno << ")" << std::endl;
+        return 1;
     }
     int opt = 1;
     //An option (SO_REUSEADDR) is defined at the socket level (SOL_SOCKET).
     //SO_REUSEADDR allows reuse of address and port immediately after restarting the server
     //opt is used to enable or disable the option 0 disable 1 enable
-    setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR ,&opt, sizeof(opt));
+    if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR ,&opt, sizeof(opt)) == -1)
+	{
+		std::cout << "Error: " << errno << std::endl;
+		return 1;
+	}
      /*struct sockaddr_in {
     sa_family_t    sin_family;   // Adress Familly (AF_INET for IPv4)
     in_port_t      sin_port;     // The port (in network format)
@@ -71,25 +89,25 @@ void Server::initServerSocket(const std::string port, const std::string pass)
     if (bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         std::cout << "Error: bind failed" << std::endl;
-        return;
+        return 1;
     }
     //SOMAXCONN allows to define the max possible connexion is generally 128 
     if (listen(_server_fd, SOMAXCONN))
     {
         std::cout << "Error: listen failed" << std::endl;
-        return;
+        return 1;
     }
     int flags = fcntl(_server_fd, F_GETFL, 0); // retrieve the flags of the socket 
     if (flags < 0)
     {
         std::cout << "Error: F_GETFL failed" << std::endl;
-        return;
+        return 1;
     }
     // manage multiple connections without blocking
     if (fcntl(_server_fd, F_SETFL, flags | O_NONBLOCK) < 0) // F_SETFL define a new flags for the socket activate noBLOCK
     {
         std::cout << "Error: F_SETFL failed" << std::endl;
-        return;
+        return 1;
     }
     // _poll_fds is used to store all file descriptors (sockets) that the server wants to monitor for events.
     struct pollfd server_pollfd;
@@ -97,6 +115,7 @@ void Server::initServerSocket(const std::string port, const std::string pass)
     server_pollfd.events = POLLIN; // Sets the POLLIN event type: Indicates that we are monitoring read events.
     server_pollfd.revents = 0; //This field is used by poll() to indicate which events actually occurred.
     _poll_fds.push_back(server_pollfd); //This allows the server to detect when a new connection is ready to be accepted
+	return 0;
 }
 
 void Server::acceptNewClient()
@@ -143,7 +162,7 @@ void Server::acceptNewClient()
 
 void Server::run()
 {
-    std::cout << "Server is Run" << std::endl;
+    std::cout << "Server is running" << std::endl;
     while (true)
     {
         //The poll() function monitors a set of file descriptors for events
@@ -176,7 +195,7 @@ void Server::clientData(int client_fd)
 {
     char buffer[512];
     memset(buffer, 0, sizeof(buffer));
-    int receive = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    ssize_t receive = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
     if (receive <= 0)
     {
         if (receive == 0)
@@ -199,12 +218,12 @@ void Server::clientData(int client_fd)
     {
         std::string command = _clients[client_fd].buffer_in.substr(0, pos);
         _clients[client_fd].buffer_in.erase(0, pos + 2);*/
-    while ((pos = _clients[client_fd].buffer_in.find("\n")) != std::string::npos)
+    while ((pos = _clients[client_fd].buffer_in.find('\n')) != std::string::npos)
     {
         std::string command = _clients[client_fd].buffer_in.substr(0, pos);
         _clients[client_fd].buffer_in.erase(0, pos + 1);
 
-        std::cout << "Command receive : " << command << std::endl;
+        std::cout << "Command received : " << command << std::endl;
 
         std::istringstream iss(command);
         std::string cmd;
@@ -213,539 +232,63 @@ void Server::clientData(int client_fd)
         if (cmd == "NICK")
         {
             //rajouter le pass
-            std::string nickname;
-            iss >> nickname;
-            if (nickname.empty())
-            {
-                std::string response = "431 :No nickname given\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            if (_clients[client_fd].is_authenticated || !_clients[client_fd].nickname.empty())
-            {
-                std::string response = "462 :You are already registered\r\n";
-                sendToClient(client_fd, response);
-                return;
-            }
-            int target_fd = getFdByNickname(nickname);
-            if (target_fd > 0)
-            {
-                sendToClient(client_fd, "NICK :Your nickname already exist\r\n");
-                return;
-            }
-            _clients[client_fd].nickname = nickname;
-            if (!_clients[client_fd].user.empty())
-            {
-                _clients[client_fd].is_authenticated = true;
-                sendToClient(client_fd, ":server 001 " + _clients[client_fd].nickname + " :Welcome!\r\n");
-            }
-            else
-                sendToClient(client_fd, ":server NOTICE * :Please set your USER\r\n");
-            std::string response = "Nickname set to " + nickname + "\r\n";
-            sendToClient(client_fd, response);
+			if (nick(iss, client_fd))
+				continue;
+			return;
         }
         else if (cmd == "USER")
         {
-            std::string user;
-            std::string realname;
-            iss >> user;
-            if (user.empty())
-            {
-                std::string response = "Error: No user given\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            std::getline(iss, realname);
-            if (!realname.empty())
-            {
-                while (!realname.empty() && (realname[0] == ' ' || realname[0] == ':'))
-                    realname.erase(0, 1);
-            }
-            else   
-                realname = "Unknow";
-            if (_clients[client_fd].is_authenticated || !_clients[client_fd].user.empty())
-            {
-                std::string response = "462 :You are already registered\r\n";
-                sendToClient(client_fd, response);
-                return;
-            }
-            _clients[client_fd].user = user;
-            _clients[client_fd].realname = realname;
-            if (!_clients[client_fd].nickname.empty())
-            {
-                _clients[client_fd].is_authenticated = true;
-                sendToClient(client_fd, ":server 001 " + _clients[client_fd].nickname + " :Welcome!\r\n");
-            }
-            else
-                sendToClient(client_fd, ":server NOTICE * :Please set your NICK\r\n");
-            std::stringstream ss;
-            ss << "USER command from FD " << client_fd 
-            << " => username: " << _clients[client_fd].user
-            << ", realname: " << _clients[client_fd].realname;
-            std::string response = ss.str() + "\r\n";
-            sendToClient(client_fd, response);
+			if (user(iss, client_fd))
+				continue;
+			return;
         }
         else if (cmd == "PASS")
         {
-            std::string pass;
-            iss >> pass;
-            if (pass.empty())
-            {
-                std::string response = "461 PASS :Not enough parameters\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            if (_clients[client_fd].is_authenticated)
-            {
-                sendToClient(client_fd, "462 PASS:You are already registered\r\n");
-                continue;
-            }
-            if (!isCorrectPasswordServer(pass))
-            {
-                std::string response = "464 PASS:Password incorrect\r\n";
-                sendToClient(client_fd, response);
-                //removeClient(client_fd);
-                continue;
-            }
-            std::string response = "NOTICE * :Password accepted\r\n";
-            sendToClient(client_fd, response);
+          if (pass(iss, client_fd))
+			  continue;
+		  return;
         }
         else if (cmd == "JOIN")
         {
-            std::string channel_name;
-            iss >> channel_name;
-            if (channel_name.empty())
-            {
-                std::string response = "JOIN :Not enough parameters\r\n";
-                sendToClient(client_fd, response);
-                return;
-            }
-            if (_channels.find(channel_name) == _channels.end())
-            {
-                Channel newChannel(channel_name);
-                newChannel.addMember(client_fd);
-                _channels[channel_name] = newChannel;
-            }
-            else
-            {
-                if (_channels[channel_name].inviteOnly == false)
-                {
-                    if (_channels[channel_name].hasKey == false)
-                        _channels[channel_name].addMember(client_fd);
-                    else
-                    {
-                        std::string pass;
-                        iss >> pass;
-                        if (_channels[channel_name].key == pass)
-                        {
-                            if (_channels[channel_name].limitUser == false || _channels[channel_name].userLimit > getNbUser(client_fd, channel_name)) 
-                                _channels[channel_name].addMember(client_fd);
-                            else
-                            {
-                                std::string response = "JOIN :This channel has reached its limit\r\n";
-                                sendToClient(client_fd, response);
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            std::string response = "JOIN :This channel needs a key ex: JOIN #channel <key>\r\n";
-                            sendToClient(client_fd, response);
-                            return;
-                        }
-                    }
-                }
-                else
-                {
-                    //ici faire linvitation si luser est deja inviter
-                    std::string response = "JOIN :This channel " + channel_name + " is INVITE only\r\n";
-                    sendToClient(client_fd, response);
-                    return;
-                }
-            }
-            _clients[client_fd].channels.insert(channel_name);
-            std::string response = ":" + _clients[client_fd].nickname
-                         + " JOIN "
-                         + channel_name
-                         + "\r\n";
-            sendToClient(client_fd, response);
+           if (join(iss, client_fd))
+			   continue;
+			return;
         }
         else if (cmd == "KICK")
         {
-            //il faut avoir les droits
-            std::string channel_name;
-            std::string target_nick;
-            std::string reason;
-            iss >> channel_name >> target_nick >> reason;
-            if(channel_name.empty() || target_nick.empty())
-            {
-                std::string response = "KICK :Not enough parameters\r\n";
-                sendToClient(client_fd, response);
-                return;
-            }
-            std::getline(iss, reason); 
-            if (!reason.empty())
-            {
-                if (reason[0] == ' ')
-                    reason.erase(0,1);
-            }
-            if (reason.empty())
-                reason = "No reason";
-            
-            if (_channels.find(channel_name) == _channels.end())
-            {
-                std::string response = "KICK :This channel doesn't exist\r\n";
-                sendToClient(client_fd, response);
-                return;
-            }
-            int target_fd = getFdByNickname(target_nick);
-            if (target_fd < 0)
-            {
-                sendToClient(client_fd, "KICK :No such nickname\r\n");
-                return;
-            }
-            if (!_channels[channel_name].isMember(target_fd))
-            {
-                sendToClient(client_fd, "KICK :Target not in channel\r\n");
-                return;
-            }
-            if (!_channels[channel_name].isMember(client_fd))
-            {
-                sendToClient(client_fd, "KICK :You are not in this channel\r\n");
-                return;
-            }
-            _channels[channel_name].removeMember(target_fd);
-            _clients[target_fd].channels.erase(channel_name);
-            std::string kicker_nick = _clients[client_fd].nickname;
-            std::stringstream msg;
-            msg << ":" << kicker_nick
-                << " KICK " << channel_name
-                << " "     << target_nick
-                << " :"    << reason
-                << "\r\n";
-            broadcastToChannel(channel_name, msg.str());
-            sendToClient(target_fd, msg.str());
+			if (kick(iss, client_fd))
+				continue;
+			return;
         }
         else if(cmd == "PART")
         {
-            std::string channel_name;
-            std::string reason;
-            if(channel_name.empty())
-            {
-                std::string response = "461 PART :Not enough parameters\r\n";
-                sendToClient(client_fd, response);
-                return;
-            }
-            std::getline(iss, reason); 
-            if (!reason.empty())
-            {
-                if (reason[0] == ' ')
-                    reason.erase(0,1);
-            }
-            if (reason.empty())
-                reason = "No reason";
-            if (_channels.find(channel_name) == _channels.end())
-            {
-                std::string response = "403 " + channel_name + " :No such channel\r\n";
-                sendToClient(client_fd, response);
-                return;
-            }
-            if (!_channels[channel_name].isMember(client_fd))
-            {
-                sendToClient(client_fd, "442 " + channel_name + " :You're not on that channel\r\n");
-                return;
-            }
-            _channels[channel_name].removeMember(client_fd);
-            _clients[client_fd].channels.erase(channel_name);
-            std::string part_nick = _clients[client_fd].nickname;
-            std::stringstream msg;
-            msg << ":" << part_nick
-                << " PART " << channel_name
-                << " "     << part_nick
-                << " :"    << reason
-                << "\r\n";
-            broadcastToChannel(channel_name, msg.str());
-            sendToClient(client_fd, msg.str());
+           if (part(iss, client_fd))
+			   continue;
+			return;
         }
         else if (cmd == "PRIVMSG")
         {
-            std::string target;
-            iss >> target;
-            if (target.empty())
-            {
-                std::string response = "411 PRIVMSG :No recipient given\r\n";
-                sendToClient(client_fd, response);
-                return;
-            }
-            std::string msg;
-            std::getline(iss, msg);
-            while (!msg.empty() && (msg[0] == ' ' || msg[0] == ':'))
-                msg.erase(0, 1);
-            if (msg.empty())
-            {
-                std::string response = "412 PRIVMSG :No text to send\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            sendPrivateMessage(client_fd, target, msg);
+            if (privmsg(iss, client_fd))
+				continue;
+			return;
         }
         else if (cmd == "TOPIC")
         {
-            //si le topic nest pas locked
-            std::string name_channel;
-            iss >> name_channel;
-            if (name_channel.empty())
-            {
-                std::string response = "461 TOPIC :No recipient given\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            std::string topic;
-            std::getline(iss, topic);
-            if (!topic.empty() && (topic[0] == ' ' || topic[0] == ':'))
-                topic.erase(0, 1);
-            if (_channels.find(name_channel) == _channels.end())
-            {
-                std::string response = "403 " + name_channel + "TOPIC :No such channel\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            if (!_channels[name_channel].isMember(client_fd))
-            {
-                std::string response = "442 " + name_channel + "TOPIC :You're not on that channel\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            //check if is operator +t
-            if (topic.empty())
-            {
-                std::string top = _channels[name_channel].getTopic();
-                if (top.empty())
-                {
-                    std::string response = "331 " + name_channel + "TOPIC :No topic is set\r\n";
-                    sendToClient(client_fd, response);
-                }
-                else
-                {
-                    std::string response = "331 " + name_channel + " :" + top + "\r\n";
-                    sendToClient(client_fd, response);
-                }
-            }
-            else
-            {
-                _channels[name_channel].setTopic(topic);
-                std::string msg = ":" + getNickname(client_fd) + " TOPIC " + name_channel + " :" + topic + "\r\n";
-                broadcastToChannel(name_channel, msg);
-            }
-
+			if (topic(iss, client_fd))
+				continue;
+			return;
         }
         else if (cmd == "INVITE")
         {
-            //rajouter les invitations
-            std::string nickname, channelName;
-            iss >> nickname >> channelName;
-            if (nickname.empty() || channelName.empty())
-            {
-                std::string response = "461 INVITE :Not enough parameters\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            if (_channels.find(channelName) == _channels.end())
-            {
-                std::string response = "403 " + channelName + "INVITE :No such channel\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            if(!_channels[channelName].isMember(client_fd))
-            {
-                std::string response = "442 " + channelName + "INVITE :You're not on that channel\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            int target = getFdByNickname(nickname);
-            if (target < 0)
-            {
-                std::string response = "401 " + channelName + "INVITE :No such nick\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            std::string response = "341 " + getNickname(client_fd) + " " + nickname + " " + channelName + "\r\n";
-            sendToClient(client_fd, response);
-            std::string notice = ":" + getNickname(client_fd) + " INVITE " + nickname + " :" + channelName + "\r\n";
-            sendToClient(target, notice);
+            if (invite(iss, client_fd))
+				continue;
+			return;
         }
         else if (cmd == "MODE")
         {
-            std::string channelOrUser, modes;
-            iss >> channelOrUser >> modes;
-            if (channelOrUser.empty())
-            {
-                std::string response = "461 MODE :Not enough parameters\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
-            if (channelOrUser[0] == '#')
-            {
-                if (_channels.find(channelOrUser) == _channels.end())
-                {
-                    std::string response = "403 " + channelOrUser + "MODE :No such channel\r\n";
-                    sendToClient(client_fd, response);
-                    continue;
-                }
-                Channel &chan = _channels[channelOrUser];
-                if (!chan.isMember(client_fd))
-                {
-                    std::string response = "442 " + channelOrUser + "MODE :You're not on that channel\r\n";
-                    sendToClient(client_fd, response);
-                    return;
-                }
-                if (!isOperator(client_fd, channelOrUser))
-                {
-                    std::string response = "482 " + channelOrUser + "MODE :You're not channel operator\r\n";
-                    sendToClient(client_fd, response);
-                    return;
-                }
-                bool add = false;
-                for (int i = 0; i < modes.size(); i++)
-                {
-                    if (modes[i] == '-')
-                        add = false;
-                    if (modes[i] == '+')
-                        add = true;
-                    switch(modes[i])
-                    {
-                        case 'i':
-                            chan.inviteOnly = add;
-                            break;
-                        case 't':
-                            chan.topicLocked = add;
-                            break;
-                        case 'k':
-                        {
-                            if (add)
-                            {
-                                if (chan.key.empty())
-                                {
-                                    std::string key;
-                                    iss >> key;
-                                    if (!key.empty())
-                                    {
-                                        chan.hasKey = add;
-                                        chan.key = key;
-                                    }
-                                    else
-                                    {
-                                        std::string response = channelOrUser + "MODE :Key is missing\r\n";
-                                        sendToClient(client_fd, response);
-                                        return;
-                                    }
-                                }
-                                else
-                                {
-                                    std::string response = channelOrUser + "MODE :The key is already exist\r\n";
-                                    sendToClient(client_fd, response);
-                                    return;
-                                }
-                            }
-                            else
-                            {
-                                chan.hasKey = false;
-                                chan.key = "";
-                                std::string response = channelOrUser + "MODE :The key is delete\r\n";
-                                sendToClient(client_fd, response);
-                                return;
-                            }
-                        }
-                        case 'l':
-                        {
-                            if (add)
-                            {
-                                std::string nbUser;
-                                iss >> nbUser;
-                                if (!nbUser.empty())
-                                {
-                                    int nb = atoi(nbUser.c_str());
-                                    if (nb == 0 || nb < 0)
-                                    {
-                                        std::string response = channelOrUser + "MODE :enter a number or a number greater than 0\r\n";
-                                        sendToClient(client_fd, response);
-                                        return;
-                                    }
-                                    if (nb < getNbUser(client_fd, channelOrUser))
-                                    {
-                                        std::string response = channelOrUser + "MODE :there are more users in the channel than the limit you propose please delete users before setting the limit\r\n";
-                                        sendToClient(client_fd, response);
-                                        return;
-                                    }
-                                    else
-                                    {
-                                        chan.limitUser = add;
-                                        chan.userLimit = nb;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                chan.limitUser = add;
-                                chan.userLimit = 0;
-                            }
-                            break;
-                        }
-                        case 'o':
-                        {
-                                std::string opUser;
-                                iss >> opUser;
-                                int fd = getFdByNickname(opUser);
-                                if (fd < 0)
-                                {
-                                    std::string response = "401 " + channelOrUser + " :No such nick\r\n";
-                                    sendToClient(client_fd, response);
-                                    continue;
-                                }
-                                if (!chan.isMember(fd))
-                                {
-                                    std::string response = "441 " + channelOrUser + "They aren't on that channel\r\n";
-                                    sendToClient(client_fd, response);
-                                    continue;
-                                }
-                                if (add)
-                                    chan.operators.insert(fd);
-                                else
-                                    chan.operators.erase(fd);
-
-                        }
-                        default:
-                        {
-                            std::string response = "501 :Unknown MODE flag\r\n";
-                            sendToClient(client_fd, response);
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                int target = getFdByNickname(channelOrUser);
-                if (target < 0)
-                {
-                    std::string response = "401 " + channelOrUser + "MODE :No such nick\r\n";
-                    sendToClient(client_fd, response);
-                    continue;
-                }
-                if (_clients.find(target) == _clients.end())
-                {
-                    std::string response = "403 " + channelOrUser + "MODE :No such channel\r\n";
-                    sendToClient(client_fd, response);
-                    continue;
-                }
-            }
-            if (modes.empty())
-            {
-                std::string mode = "-i Set/Remove Channel to Invite Only \r\n -t : Set/remove TOPIC command restrictions for channel operators \r\n -k: Set/delete channel key (password) \r\n -o: Grant/withdraw channel operator privilege \r\n -l : Set/remove user limit for channel";
-                std::string response = mode + "324 " + channelOrUser + "MODE + (some modes)\r\n";
-                sendToClient(client_fd, response);
-                continue;
-            }
+			if (mode(iss, client_fd))
+				continue;
+			return;
         }
         else
         {
@@ -755,9 +298,10 @@ void Server::clientData(int client_fd)
     }
 }
 
-size_t Server::getNbUser(int clients_fd, const std::string &channel)
+int Server::getNbUser(int clients_fd, const std::string &channel)
 {
     int i = 0;
+	(void)clients_fd;
     for (std::set<int>::iterator it = _channels[channel].getMembers().begin(); it != _channels[channel].getMembers().begin(); ++it)
         i++;
     return i;

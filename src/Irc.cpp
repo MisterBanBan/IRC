@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     std::string pass = argv[2];
 
     Server server;
-    server.initServerSocket(port, pass);
+    if (server.initServerSocket(port, pass))
+		return 1;
     server.run();
-    
 }

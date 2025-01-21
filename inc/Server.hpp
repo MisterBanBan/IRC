@@ -22,7 +22,7 @@ class Server
     public:
         Server(void);
         Server(const Server &other);
-        void initServerSocket(const std::string port, const std::string);
+        int	initServerSocket(const std::string & port, const std::string & pass);
         void acceptNewClient();
         void clientData(int client_fd);
         void sendToClient(int client_fd, const std::string &reponse);
@@ -33,7 +33,19 @@ class Server
         void sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
         bool isCorrectPasswordServer(const std::string &pass);
         bool isOperator(int client_fd, const std::string &channel);
-        size_t getNbUser(int client_fd, const std::string &channel);
+        int	getNbUser(int client_fd, const std::string &channel);
+
+		bool	nick(std::istringstream & iss, int client_fd);
+		bool	user(std::istringstream & iss, int client_fd);
+		bool	pass(std::istringstream & iss, int client_fd);
+		bool	join(std::istringstream & iss, int client_fd);
+		bool	kick(std::istringstream & iss, int client_fd);
+		bool	part(std::istringstream & iss, int client_fd);
+		bool	privmsg(std::istringstream & iss, int client_fd);
+		bool	topic(std::istringstream & iss, int client_fd);
+		bool	invite(std::istringstream & iss, int client_fd);
+		bool	mode(std::istringstream & iss, int client_fd);
+
         void run();
         ~Server(void);
         Server &operator=(const Server &other);
@@ -44,5 +56,7 @@ class Server
         std::map<int, Client> _clients;
         std::string _serverPassword;
 };
+
+
 
 #endif
