@@ -17,22 +17,26 @@ bool Server::join(std::istringstream &iss, int client_fd) {
 	iss >> channel_name;
 	if (channel_name.empty())
 	{
-		std::string response = "JOIN :Not enough parameters\r\n";
+		std::string response = "JOIN: Not enough parameters\r\n";
 		sendToClient(client_fd, response);
 		return false;
 	}
 
-	std::cout << "Size: " << _channels.size() << std::endl;
+	if (channel_name[0] != '#')
+	{
+		std::string response = "JOIN: Channel format -> <#channel>\r\n";
+		sendToClient(client_fd, response);
+		return false;
+	}
+
 	if (_channels.find(channel_name) == _channels.end())
 	{
-		std::cout << "Test" << std::endl;
 		Channel newChannel(channel_name);
 		newChannel.addMember(client_fd);
 		_channels[channel_name] = newChannel;
 	}
 	else
 	{
-		std::cout << "Test2" << std::endl;
 		if (_channels[channel_name].inviteOnly == false)
 		{
 			if (_channels[channel_name].hasKey == false)
@@ -47,14 +51,14 @@ bool Server::join(std::istringstream &iss, int client_fd) {
 						_channels[channel_name].addMember(client_fd);
 					else
 					{
-						std::string response = "JOIN :This channel has reached its limit\r\n";
+						std::string response = "JOIN: This channel has reached its limit\r\n";
 						sendToClient(client_fd, response);
 						return false;
 					}
 				}
 				else
 				{
-					std::string response = "JOIN :This channel needs a key ex: JOIN #channel <key>\r\n";
+					std::string response = "JOIN: This channel needs a key ex: JOIN #channel <key>\r\n";
 					sendToClient(client_fd, response);
 					return false;
 				}
@@ -73,6 +77,7 @@ bool Server::join(std::istringstream &iss, int client_fd) {
 						   + " JOIN "
 						   + channel_name
 						   + "\r\n";
+	_channels[channel_name].operators.insert(client_fd);
 	sendToClient(client_fd, response);
 	return true;
 }
