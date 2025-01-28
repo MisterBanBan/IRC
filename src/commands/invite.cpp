@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   invite.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:09 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:50:09 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/28 18:08:08 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-bool Server::invite(std::istringstream &iss, int client_fd) {
+bool Server::invite(std::istringstream &iss, int client_fd)
+{
 	//rajouter les invitations
 	std::string nickname, channelName;
 	iss >> nickname >> channelName;
@@ -35,6 +36,18 @@ bool Server::invite(std::istringstream &iss, int client_fd) {
 		return true;
 	}
 	int target = getFdByNickname(nickname);
+	if (_channels[channelName].isMember(target))
+	{
+		std::string response = "443 " + channelName + "INVITE :ERR_USERONCHANNEL\r\n";
+		sendToClient(client_fd, response);
+		return true;
+	}
+	if (_channels[channelName].inviteOnly && !isOperator(client_fd, channelName))
+	{
+		std::string response = "482 " + channelName + "INVITE :ERR_CHANOPRIVSNEEDED\r\n";
+		sendToClient(client_fd, response);
+		return true;
+	}
 	if (target < 0)
 	{
 		std::string response = "401 " + channelName + "INVITE :No such nick\r\n";
