@@ -213,15 +213,13 @@ void Server::clientData(int client_fd)
     }
 
     _clients[client_fd].buffer_in.append(buffer, receive);
-    size_t pos;
-/*en attendant dtre sur un vrai hexchat  while ((pos = _clients[client_fd].buffer_in.find("\r\n")) != std::string::npos)
-    {
-        std::string command = _clients[client_fd].buffer_in.substr(0, pos);
-        _clients[client_fd].buffer_in.erase(0, pos + 2);*/
-    while ((pos = _clients[client_fd].buffer_in.find('\n')) != std::string::npos)
-    {
-        std::string command = _clients[client_fd].buffer_in.substr(0, pos);
-        _clients[client_fd].buffer_in.erase(0, pos + 1);
+
+	size_t pos;
+
+	while ((pos = _clients[client_fd].buffer_in.find("\r\n")) != std::string::npos)
+	{
+		std::string command = _clients[client_fd].buffer_in.substr(0, pos);
+		_clients[client_fd].buffer_in.erase(0, pos + 2);
 
         std::cout << "Command received : " << command << std::endl;
 
