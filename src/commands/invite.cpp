@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   invite.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:09 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/28 18:08:08 by afavier          ###   ########.fr       */
+/*   Updated: 2025/01/29 17:32:58 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,13 +38,13 @@ bool Server::invite(std::istringstream &iss, int client_fd)
 	int target = getFdByNickname(nickname);
 	if (_channels[channelName].isMember(target))
 	{
-		std::string response = "443 " + channelName + "INVITE :ERR_USERONCHANNEL\r\n";
+		std::string response = "443 " + channelName + "INVITE :is already on channel\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
 	if (_channels[channelName].getInviteOnly() && !_channels[channelName].isOperator(client_fd))
 	{
-		std::string response = "482 " + channelName + "INVITE :ERR_CHANOPRIVSNEEDED\r\n";
+		std::string response = "482 " + channelName + "INVITE :you're not channel operator\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
