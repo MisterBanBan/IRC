@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   kick.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:26 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:49:26 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/29 17:33:28 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,15 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 	}
 	if (reason.empty())
 		reason = "No reason";
-
 	if (_channels.find(channel_name) == _channels.end())
 	{
-		std::string response = "KICK :This channel doesn't exist\r\n";
+		std::string response = "403 " + channel_name + "INVITE :No such channel\r\n";
+		sendToClient(client_fd, response);
+		return false;
+	}
+	if (!isOperator(client_fd, channel_name))
+	{
+		std::string response = "482 " + channel_name + "INVITE :You're not channel operator\r\n";
 		sendToClient(client_fd, response);
 		return false;
 	}
@@ -47,12 +52,14 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 	}
 	if (!_channels[channel_name].isMember(target_fd))
 	{
-		sendToClient(client_fd, "KICK :Target not in channel\r\n");
+		std::string response = "441 " + channel_name + "INVITE :They aren't on that channel\r\n";
+		sendToClient(client_fd, response);
 		return false;
 	}
 	if (!_channels[channel_name].isMember(client_fd))
 	{
-		sendToClient(client_fd, "KICK :You are not in this channel\r\n");
+		std::string response = "441 " + channel_name + "KICK :You're not on that channel\r\n";
+		sendToClient(client_fd, response);
 		return false;
 	}
 	_channels[channel_name].removeMember(target_fd);
