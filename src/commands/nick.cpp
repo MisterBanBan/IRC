@@ -23,16 +23,17 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 		sendToClient(client_fd, response);
 		return true;
 	}
-	if (_clients[client_fd].is_authenticated || !_clients[client_fd].nickname.empty())
-	{
-		std::string response = "462 :You are already registered\r\n";
-		sendToClient(client_fd, response);
-		return false;
-	}
 	int target_fd = getFdByNickname(nickname);
 	if (target_fd > 0)
 	{
-		sendToClient(client_fd, "NICK :Your nickname already exist\r\n");
+		if (!_clients[client_fd].is_authenticated)
+		{
+			std::string response = "NICK :Nickname already taken\r\n";
+			sendToClient(client_fd, response);
+			removeClient(client_fd);
+		}
+		else
+			sendToClient(client_fd, "NICK :Your nickname already exist\r\n");
 		return false;
 	}
 	_clients[client_fd].nickname = nickname;

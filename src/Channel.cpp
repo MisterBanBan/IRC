@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Channel.cpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/01/29 09:14:22 by mbaron-t          #+#    #+#             */
+/*   Updated: 2025/01/29 09:14:22 by mbaron-t         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "Channel.hpp"
 
 Channel::Channel(void) { }
@@ -60,7 +72,11 @@ void Channel::inviteUser(int fd)
     this->_inviteUser.insert(fd);
 }
 
-bool Channel::isInvite(int fd)
+bool Channel::isInvited(int fd)
 {
     return (_inviteUser.find(fd) != _inviteUser.end());
+}
+
+std::string Channel::getName() const {
+	return _name;
 }

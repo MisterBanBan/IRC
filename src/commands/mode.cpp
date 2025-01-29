@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:18 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:50:18 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/29 11:16:52 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,18 +46,21 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 		bool add = false;
 		for (size_t i = 0; i < modes.size(); i++)
 		{
+			std::cout << "Index: " << i << " | " << modes[i] << std::endl;
 			if (modes[i] == '-')
 				add = false;
 			if (modes[i] == '+')
 				add = true;
+			if (modes[i] == '+' || modes[i] == '-')
+				continue;
 			switch(modes[i])
 			{
 				case 'i':
 					chan.inviteOnly = add;
-					break;
+					continue;
 				case 't':
 					chan.topicLocked = add;
-					break;
+					continue;
 				case 'k':
 				{
 					if (add)
@@ -70,17 +73,19 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 							{
 								chan.hasKey = add;
 								chan.key = key;
+								std::string response = "MODE :Pass added for " + chan.getName() + "\r\n";
+								sendToClient(client_fd, response);
 							}
 							else
 							{
-								std::string response = channelOrUser + "MODE :Key is missing\r\n";
+								std::string response = "MODE :Pass is missing\r\n";
 								sendToClient(client_fd, response);
 								return false;
 							}
 						}
 						else
 						{
-							std::string response = channelOrUser + "MODE :The key is already exist\r\n";
+							std::string response = "MODE :The channel " + chan.getName() + " already has an existing pass\r\n";
 							sendToClient(client_fd, response);
 							return false;
 						}
@@ -88,8 +93,8 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 					else
 					{
 						chan.hasKey = false;
-						chan.key = "";
-						std::string response = channelOrUser + "MODE :The key is delete\r\n";
+						chan.key.clear();
+						std::string response = "MODE :The pass for " + chan.getName() + "has been removed\r\n";
 						sendToClient(client_fd, response);
 						return false;
 					}
@@ -102,16 +107,17 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 						iss >> nbUser;
 						if (!nbUser.empty())
 						{
-							int nb = atoi(nbUser.c_str());
-							if (nb == 0 || nb < 0)
+							char *end = NULL;
+							int nb = strtol(nbUser.c_str(), &end, 10);
+							if (nb <= 0 || *end != '\0')
 							{
-								std::string response = channelOrUser + "MODE :enter a number or a number greater than 0\r\n";
+								std::string response = "MODE :enter a number or a number greater than 0\r\n";
 								sendToClient(client_fd, response);
 								return false;
 							}
 							if (nb < getNbUser(client_fd, channelOrUser))
 							{
-								std::string response = channelOrUser + "MODE :there are more users in the channel than the limit you propose please delete users before setting the limit\r\n";
+								std::string response = "MODE :there are more users in the channel" + chan.getName() + "than the limit you are try to set. Please consider deleting users before setting the limit\r\n";
 								sendToClient(client_fd, response);
 								return false;
 							}
@@ -119,6 +125,8 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 							{
 								chan.limitUser = add;
 								chan.userLimit = nb;
+								std::string response = "MODE :Limit of users set for the channel " + chan.getName() + "\r\n";
+								sendToClient(client_fd, response);
 							}
 						}
 					}
@@ -126,8 +134,10 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 					{
 						chan.limitUser = add;
 						chan.userLimit = 0;
+						std::string response = "MODE :removed channel's users limit\r\n";
+						sendToClient(client_fd, response);
 					}
-					break;
+					continue;
 				}
 				case 'o':
 				{
@@ -164,7 +174,6 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 	else
 	{
 		int target = getFdByNickname(channelOrUser);
-		std::cout << target << std::endl;
 		if (target < 0)
 		{
 			std::string response = "401 " + channelOrUser + "MODE :No such nick\r\n";
@@ -178,6 +187,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 			return true;
 		}
 	}
+
 	if (modes.empty())
 	{
 		std::string mode = "-i Set/Remove Channel to Invite Only \r\n -t : Set/remove TOPIC command restrictions for channel operators \r\n -k: Set/delete channel key (password) \r\n -o: Grant/withdraw channel operator privilege \r\n -l : Set/remove user limit for channel";
