@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Channel.hpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/01/29 09:14:22 by mbaron-t          #+#    #+#             */
+/*   Updated: 2025/01/29 09:14:26 by mbaron-t         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
@@ -18,8 +30,9 @@ class Channel
         void removeMember(int fd);
         bool isMember(int fd) const;
         void inviteUser(int fd);
-        bool isInvite(int fd);
+        bool isInvited(int fd);
         std::string getTopic() const;
+		std::string getName() const;
         void setTopic(const std::string &topic);
         bool inviteOnly; //+i
         bool topicLocked; //+t

@@ -11,7 +11,7 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 #include <sstream> //istringstream
-#include <stdlib.h> //atoi
+#include <cstdlib> //atoi
 #include <cstring> //memset
 #include <cerrno>
 

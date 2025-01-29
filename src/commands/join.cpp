@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:49:13 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/29 12:03:35 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,50 +34,52 @@ bool Server::join(std::istringstream &iss, int client_fd) {
 		Channel newChannel(channel_name);
 		newChannel.addMember(client_fd);
 		_channels[channel_name] = newChannel;
+		_channels[channel_name].operators.insert(client_fd);
 	}
 	else
 	{
-		if (_channels[channel_name].inviteOnly == false)
+		if (_channels[channel_name].limitUser && _channels[channel_name].userLimit == getNbUser(client_fd, channel_name))
 		{
-			if (_channels[channel_name].hasKey == false)
+			std::string response = "JOIN: This channel has reached its limit\r\n";
+			sendToClient(client_fd, response);
+			return false;
+		}
+
+		if (!_channels[channel_name].inviteOnly)
+		{
+			if (!_channels[channel_name].hasKey)
 				_channels[channel_name].addMember(client_fd);
 			else
 			{
 				std::string pass;
 				iss >> pass;
 				if (_channels[channel_name].key == pass)
-				{
-					if (_channels[channel_name].limitUser == false || _channels[channel_name].userLimit > getNbUser(client_fd, channel_name))
-						_channels[channel_name].addMember(client_fd);
-					else
-					{
-						std::string response = "JOIN: This channel has reached its limit\r\n";
-						sendToClient(client_fd, response);
-						return false;
-					}
-				}
+					_channels[channel_name].addMember(client_fd);
 				else
 				{
-					std::string response = "JOIN: This channel needs a key ex: JOIN #channel <key>\r\n";
+					std::string response;
+					if (pass.empty())
+						response = "JOIN: This channel needs a pass (JOIN #channel <pass>)\r\n";
+					else
+						response = "JOIN: Invalid password\r\n";
 					sendToClient(client_fd, response);
 					return false;
 				}
 			}
 		}
 		else
-		{
-			//ici faire linvitation si luser est deja inviter
-			std::string response = "JOIN :This channel " + channel_name + " is INVITE only\r\n";
-			sendToClient(client_fd, response);
-			return false;
-		}
+			if (!_channels[channel_name].isInvited(client_fd))
+			{
+				std::string response = "JOIN: This channel " + channel_name + " is on INVITE only\r\n";
+				sendToClient(client_fd, response);
+				return false;
+			}
 	}
 	_clients[client_fd].channels.insert(channel_name);
 	std::string response = ":" + _clients[client_fd].nickname
 						   + " JOIN "
 						   + channel_name
 						   + "\r\n";
-	_channels[channel_name].operators.insert(client_fd);
 	sendToClient(client_fd, response);
 	return true;
 }

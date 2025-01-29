@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:48:52 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/29 13:37:32 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,8 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 			realname.erase(0, 1);
 	}
 	else
-		realname = "Unknow";
+		realname = "Unknown";
+
 	if (_clients[client_fd].is_authenticated || !_clients[client_fd].user.empty())
 	{
 		std::string response = "462 :You are already registered\r\n";
