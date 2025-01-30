@@ -34,26 +34,26 @@ bool Server::join(std::istringstream &iss, int client_fd) {
 		Channel newChannel(channel_name);
 		newChannel.addMember(client_fd);
 		_channels[channel_name] = newChannel;
-		_channels[channel_name].operators.insert(client_fd);
+		_channels[channel_name].getOperators().insert(client_fd);
 	}
 	else
 	{
-		if (_channels[channel_name].limitUser && _channels[channel_name].userLimit == getNbUser(client_fd, channel_name))
+		if (_channels[channel_name].getLimitUser() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
 		{
 			std::string response = "JOIN: This channel has reached its limit\r\n";
 			sendToClient(client_fd, response);
 			return false;
 		}
 
-		if (!_channels[channel_name].inviteOnly)
+		if (!_channels[channel_name].getInviteOnly())
 		{
-			if (!_channels[channel_name].hasKey)
+			if (!_channels[channel_name].getHasKey())
 				_channels[channel_name].addMember(client_fd);
 			else
 			{
 				std::string pass;
 				iss >> pass;
-				if (_channels[channel_name].key == pass)
+				if (_channels[channel_name].getKey() == pass)
 					_channels[channel_name].addMember(client_fd);
 				else
 				{

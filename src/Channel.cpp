@@ -14,9 +14,8 @@
 
 Channel::Channel(void) { }
 
-Channel::Channel(const std::string &channelName) : _name(channelName)
+Channel::Channel(const std::string &channelName) : _name(channelName), _inviteOnly(false), _topicLocked(false), _hasKey(false), _limitUser(false), _userLimit(0)
 {
-
 }
 
 Channel::Channel(const Channel &other)
@@ -72,11 +71,71 @@ void Channel::inviteUser(int fd)
     this->_inviteUser.insert(fd);
 }
 
-bool Channel::isInvited(int fd)
+bool Channel::isInvited(int fd) const
 {
     return (_inviteUser.find(fd) != _inviteUser.end());
 }
 
-std::string Channel::getName() const {
+std::string Channel::getName() const
+{
 	return _name;
+}
+
+bool Channel::isOperator(int fd) const
+{
+	if (_operators.find(fd) == _operators.end())
+		return false;
+	return true;
+}
+
+int Channel::getUserLimit() const {
+	return _userLimit;
+}
+
+std::set<int> &Channel::getOperators() {
+	return _operators;
+}
+
+void Channel::setUserLimit(int limit) {
+	_userLimit = limit;
+}
+
+std::string Channel::getKey() const {
+	return _key;
+}
+
+void Channel::setKey(const std::string & key) {
+	_key = key;
+}
+
+bool Channel::getHasKey() const {
+	return _hasKey;
+}
+
+bool Channel::getTopicLocked() const {
+	return _topicLocked;
+}
+
+bool Channel::getInviteOnly() const {
+	return _inviteOnly;
+}
+
+bool Channel::getLimitUser() const {
+	return _limitUser;
+}
+
+void Channel::setTopicLocked(bool active) {
+	_topicLocked = active;
+}
+
+void Channel::setHasKey(bool active) {
+	_hasKey = active;
+}
+
+void Channel::setInviteOnly(bool active) {
+	_inviteOnly = active;
+}
+
+void Channel::setLimitUser(bool active) {
+	_limitUser = active;
 }

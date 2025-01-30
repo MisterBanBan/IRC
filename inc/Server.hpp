@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
+/*   Updated: 2025/01/30 15:04:07 by mbaron-t         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef SERVER_HPP
 #define SERVER_HPP
 #include <iostream>
@@ -32,7 +44,6 @@ class Server
         void broadcastToChannel(const std::string &channel_name, const std::string &message);
         void sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
         bool isCorrectPasswordServer(const std::string &pass);
-        bool isOperator(int client_fd, const std::string &channel);
         int	getNbUser(int client_fd, const std::string &channel);
 
 		bool	nick(std::istringstream & iss, int client_fd);

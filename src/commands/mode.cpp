@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:18 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/29 11:16:52 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/30 13:33:48 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,149 +26,166 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 	{
 		if (_channels.find(channelOrUser) == _channels.end())
 		{
-			std::string response = "403 " + channelOrUser + "MODE :No such channel\r\n";
+			std::string response = "403 " + channelOrUser + " MODE :No such channel\r\n";
 			sendToClient(client_fd, response);
 			return true;
 		}
 		Channel &chan = _channels[channelOrUser];
 		if (!chan.isMember(client_fd))
 		{
-			std::string response = "442 " + channelOrUser + "MODE :You're not on that channel\r\n";
+			std::string response = "442 " + channelOrUser + " MODE :You're not on that channel\r\n";
 			sendToClient(client_fd, response);
 			return false;
 		}
-		if (!isOperator(client_fd, channelOrUser))
+		if (!chan.isOperator(client_fd))
 		{
-			std::string response = "482 " + channelOrUser + "MODE :You're not channel operator\r\n";
+			std::string response = "482 " + channelOrUser + " MODE :You're not channel operator\r\n";
 			sendToClient(client_fd, response);
 			return false;
 		}
 		bool add = false;
-		for (size_t i = 0; i < modes.size(); i++)
-		{
-			std::cout << "Index: " << i << " | " << modes[i] << std::endl;
-			if (modes[i] == '-')
-				add = false;
-			if (modes[i] == '+')
-				add = true;
-			if (modes[i] == '+' || modes[i] == '-')
-				continue;
-			switch(modes[i])
+
+		//while (!modes.empty())
+	//	{
+			for (size_t i = 0; i < modes.size(); i++)
 			{
-				case 'i':
-					chan.inviteOnly = add;
-					continue;
-				case 't':
-					chan.topicLocked = add;
-					continue;
-				case 'k':
+				if (i == 0)
 				{
-					if (add)
+					if (modes[i] == '-')
+						add = false;
+					if (modes[i] == '+')
+						add = true;
+					if (modes[i] == '+' || modes[i] == '-')
+						continue;
+					else
 					{
-						if (chan.key.empty())
+						std::string response = "MODE :Flags must start with '-' or '+'\r\n";
+						sendToClient(client_fd, response);
+						break;
+					}
+				}
+				switch(modes[i])
+				{
+					case 'i':
+						chan.setInviteOnly(add);
+						continue;
+					case 't':
+						chan.setTopicLocked(add);
+						continue;
+					case 'k':
+					{
+						if (add)
 						{
-							std::string key;
-							iss >> key;
-							if (!key.empty())
+							if (chan.getKey().empty())
 							{
-								chan.hasKey = add;
-								chan.key = key;
-								std::string response = "MODE :Pass added for " + chan.getName() + "\r\n";
-								sendToClient(client_fd, response);
+								std::string key;
+								iss >> key;
+								if (!key.empty())
+								{
+									chan.setHasKey(true);
+									chan.setKey(key);
+									std::string response = "MODE :Pass added for " + chan.getName() + "\r\n";
+									sendToClient(client_fd, response);
+								}
+								else
+								{
+									std::string response = "MODE :Pass is missing\r\n";
+									sendToClient(client_fd, response);
+									return false;
+								}
 							}
 							else
 							{
-								std::string response = "MODE :Pass is missing\r\n";
+								std::string response = "MODE :The channel " + chan.getName() + " already has an existing pass\r\n";
 								sendToClient(client_fd, response);
-								return false;
+								continue;
 							}
 						}
 						else
 						{
-							std::string response = "MODE :The channel " + chan.getName() + " already has an existing pass\r\n";
+							chan.setHasKey(false);
+							chan.setKey("");
+							std::string response = "MODE :The pass for " + chan.getName() + "has been removed\r\n";
 							sendToClient(client_fd, response);
-							return false;
+							continue;
 						}
 					}
-					else
+					case 'l':
 					{
-						chan.hasKey = false;
-						chan.key.clear();
-						std::string response = "MODE :The pass for " + chan.getName() + "has been removed\r\n";
-						sendToClient(client_fd, response);
-						return false;
-					}
-				}
-				case 'l':
-				{
-					if (add)
-					{
-						std::string nbUser;
-						iss >> nbUser;
-						if (!nbUser.empty())
+						if (add)
 						{
-							char *end = NULL;
-							int nb = strtol(nbUser.c_str(), &end, 10);
-							if (nb <= 0 || *end != '\0')
+							std::string nbUser;
+							iss >> nbUser;
+							if (!nbUser.empty())
 							{
-								std::string response = "MODE :enter a number or a number greater than 0\r\n";
-								sendToClient(client_fd, response);
-								return false;
-							}
-							if (nb < getNbUser(client_fd, channelOrUser))
-							{
-								std::string response = "MODE :there are more users in the channel" + chan.getName() + "than the limit you are try to set. Please consider deleting users before setting the limit\r\n";
-								sendToClient(client_fd, response);
-								return false;
-							}
-							else
-							{
-								chan.limitUser = add;
-								chan.userLimit = nb;
-								std::string response = "MODE :Limit of users set for the channel " + chan.getName() + "\r\n";
-								sendToClient(client_fd, response);
+								char *end = NULL;
+								int nb = strtol(nbUser.c_str(), &end, 10);
+								if (nb <= 0 || *end != '\0')
+								{
+									std::string response = "MODE :enter a number or a number greater than 0\r\n";
+									sendToClient(client_fd, response);
+									return false;
+								}
+								if (nb < getNbUser(client_fd, channelOrUser))
+								{
+									std::string response = "MODE :there are more users in the channel " + chan.getName() + " than the limit you are try to set. Please consider deleting users before setting the limit\r\n";
+									sendToClient(client_fd, response);
+									return false;
+								}
+								else
+								{
+									chan.setLimitUser(add);
+									chan.setUserLimit(nb);
+									std::string response = "MODE :Limit of users set for the channel " + chan.getName() + "\r\n";
+									sendToClient(client_fd, response);
+								}
 							}
 						}
+						else
+						{
+							chan.setLimitUser(add);
+							chan.setUserLimit(0);
+							std::string response = "MODE :removed channel's users limit\r\n";
+							sendToClient(client_fd, response);
+						}
+						continue;
 					}
-					else
+					case 'o':
 					{
-						chan.limitUser = add;
-						chan.userLimit = 0;
-						std::string response = "MODE :removed channel's users limit\r\n";
-						sendToClient(client_fd, response);
-					}
-					continue;
-				}
-				case 'o':
-				{
-					std::string opUser;
-					iss >> opUser;
-					int fd = getFdByNickname(opUser);
-					if (fd < 0)
-					{
-						std::string response = "401 " + channelOrUser + " :No such nick\r\n";
-						sendToClient(client_fd, response);
-						return true;
-					}
-					if (!chan.isMember(fd))
-					{
-						std::string response = "441 " + channelOrUser + "They aren't on that channel\r\n";
-						sendToClient(client_fd, response);
-						return true;
-					}
-					if (add)
-						chan.operators.insert(fd);
-					else
-						chan.operators.erase(fd);
+						std::string opUser;
+						iss >> opUser;
+						int fd = getFdByNickname(opUser);
+						if (fd < 0)
+						{
+							std::string response = "401 " + channelOrUser + " :No such nick\r\n";
+							sendToClient(client_fd, response);
+							return true;
+						}
+						if (!chan.isMember(fd))
+						{
+							std::string response = "441 " + channelOrUser + " :They aren't on that channel\r\n";
+							sendToClient(client_fd, response);
+							return true;
+						}
+						if (add)
+						{
+							chan.getOperators().insert(fd);
+							std::string response = "MODE :Added " + opUser + " as an channel operator for " + chan.getName() + "\r\n";
+							sendToClient(client_fd, response);
+						}
+						else
+							chan.getOperators().erase(fd);
 
+					}
+					default:
+					{
+						std::string response = "501 :Unknown MODE flag\r\n";
+						sendToClient(client_fd, response);
+						break;
+					}
 				}
-				default:
-				{
-					std::string response = "501 :Unknown MODE flag\r\n";
-					sendToClient(client_fd, response);
-					break;
-				}
-			}
+			//}
+			//iss >> modes;
 		}
 	}
 	else

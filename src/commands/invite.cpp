@@ -42,7 +42,7 @@ bool Server::invite(std::istringstream &iss, int client_fd)
 		sendToClient(client_fd, response);
 		return true;
 	}
-	if (_channels[channelName].inviteOnly && !isOperator(client_fd, channelName))
+	if (_channels[channelName].getInviteOnly() && !_channels[channelName].isOperator(client_fd))
 	{
 		std::string response = "482 " + channelName + "INVITE :ERR_CHANOPRIVSNEEDED\r\n";
 		sendToClient(client_fd, response);

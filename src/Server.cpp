@@ -305,17 +305,6 @@ int Server::getNbUser(int clients_fd, const std::string &channel)
     return i;
 }
 
-bool Server::isOperator(int clients_fd, const std::string &channel)
-{
-    if (_channels[channel].operators.find(clients_fd) == _channels[channel].operators.end())
-    {
-        std::string response = "MODE :You are not operator in this channel : " + channel + " !\r\n";
-        sendToClient(clients_fd, response);
-        return false;
-    }
-    return true;
-}
-
 void Server::sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg)
 {
     if (target[0] == '#')
