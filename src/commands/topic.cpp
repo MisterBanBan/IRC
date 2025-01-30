@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   topic.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:59 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:49:59 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/30 15:14:56 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,46 +18,62 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 	iss >> name_channel;
 	if (name_channel.empty())
 	{
-		std::string response = "461 TOPIC :No recipient given\r\n";
+		std::string response = "461 TOPIC: Not enough parameters\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
-	std::string topic;
-	std::getline(iss, topic);
-	if (!topic.empty() && (topic[0] == ' ' || topic[0] == ':'))
-		topic.erase(0, 1);
 	if (_channels.find(name_channel) == _channels.end())
 	{
-		std::string response = "403 " + name_channel + "TOPIC :No such channel\r\n";
+		std::string response = "403 " + name_channel + "TOPIC: No such channel\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
 	if (!_channels[name_channel].isMember(client_fd))
 	{
-		std::string response = "442 " + name_channel + "TOPIC :You're not on that channel\r\n";
+		std::string response = "442 " + name_channel + "TOPIC: You're not on that channel\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
-	//check if is operator +t
-	if (topic.empty())
+	if (_channels[name_channel].topicLocked && !isOperator(client_fd, name_channel))
 	{
-		std::string top = _channels[name_channel].getTopic();
-		if (top.empty())
-		{
-			std::string response = "331 " + name_channel + "TOPIC :No topic is set\r\n";
-			sendToClient(client_fd, response);
-		}
-		else
-		{
-			std::string response = "331 " + name_channel + " :" + top + "\r\n";
-			sendToClient(client_fd, response);
-		}
+		std::string response = "482 " + name_channel + "TOPIC: You're not channel operator\r\n";
+		sendToClient(client_fd, response);
+		return true;
 	}
-	else
+	std::string topic;
+	std::getline(iss, topic);
+	while (!topic.empty() && (topic[0] == ' ' || topic[0] == ':'))
 	{
-		_channels[name_channel].setTopic(topic);
-		std::string msg = ":" + getNickname(client_fd) + " TOPIC " + name_channel + " :" + topic + "\r\n";
-		broadcastToChannel(name_channel, msg);
+		if (topic[0] == ':')
+		{
+			topic.erase(0, 1);
+			if (topic.empty())
+			{
+				std::string top = _channels[name_channel].getTopic();
+				if (top.empty())
+				{
+					std::string response = "331 " + name_channel + "TOPIC :No topic is set\r\n";
+					sendToClient(client_fd, response);
+					return true;
+				}
+				else
+				{
+					std::string response = "331 " + name_channel + " :" + top + "\r\n";
+					sendToClient(client_fd, response);
+					return true;
+				}
+			}
+			else
+			{
+				_channels[name_channel].setTopic(topic);
+				std::string msg = ":" + getNickname(client_fd) + " TOPIC " + name_channel + " :" + topic + "\r\n";
+				broadcastToChannel(name_channel, msg);
+				return true;
+			}
+		}
+		topic.erase(0, 1);
 	}
+	std::string response = "Error :The order is TOPIC #channel :topic\r\n";
+	sendToClient(client_fd, response);
 	return true;
 }
