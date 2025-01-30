@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   nick.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:43 by mbaron-t          #+#    #+#             */
 /*   Updated: 2025/01/30 11:08:10 by mbaron-t         ###   ########.fr       */
