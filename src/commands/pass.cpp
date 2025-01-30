@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pass.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:00 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:49:00 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/30 13:19:51 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 	{
 		std::string response = "464 PASS:Password incorrect\r\n";
 		sendToClient(client_fd, response);
-		//removeClient(client_fd);
 		return true;
 	}
 	std::string response = "NOTICE * :Password accepted\r\n";

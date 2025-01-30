@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   privmsg.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:49:52 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/30 14:37:12 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,16 +21,69 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, response);
 		return false;
 	}
-	std::string msg;
-	std::getline(iss, msg);
-	while (!msg.empty() && (msg[0] == ' ' || msg[0] == ':'))
-		msg.erase(0, 1);
-	if (msg.empty())
+	if (target.size() > 0 && target[0] == '#')
 	{
+		if (_channels.find(target) == _channels.end())
+		{
+			std::string response = "403 " + target + "PRIVMSG :No such channel\r\n";
+			sendToClient(client_fd, response);
+			return true;
+		}
+		if (_channels[target].hasKey)
+		{
+			//peut etre dautre chose a rajouter
+			std::string response = "404 " + target + "PRIVMSG :Cannot send to channel\r\n";
+			sendToClient(client_fd, response);
+			return true;
+		}
+		std::string msg;
+		std::getline(iss, msg);
+		while (!msg.empty() && (msg[0] == ' ' || msg[0] == ':'))
+		{
+			if (msg[0] == ':')
+			{
+				msg.erase(0, 1);
+				if (msg.empty())
+				{
+					std::string response = "412 PRIVMSG :No text to send\r\n";
+					sendToClient(client_fd, response);
+					return true;
+				}
+				broadcastToChannel(target, msg);
+				return true;
+			}
+			msg.erase(0, 1);
+		}
 		std::string response = "412 PRIVMSG :No text to send\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
-	sendPrivateMessage(client_fd, target, msg);
+	int targetFd = getFdByNickname(target);
+	if (targetFd < 0)
+	{
+		std::string response = "401 PRIVMSG :No such nick\r\n";
+		sendToClient(client_fd, response);
+		return true;
+	}
+	std::string msg;
+	std::getline(iss, msg);
+	while (!msg.empty() && (msg[0] == ' ' || msg[0] == ':'))
+	{
+		if (msg[0] == ':')
+		{
+			msg.erase(0, 1);
+			if (msg.empty())
+			{
+				std::string response = "412 PRIVMSG :No text to send\r\n";
+				sendToClient(client_fd, response);
+				return true;
+			}
+			sendPrivateMessage(client_fd, target, msg);
+			return true;
+		}
+		msg.erase(0, 1);
+	}
+	std::string response = "412 PRIVMSG :No text to send\r\n";
+	sendToClient(client_fd, response);
 	return true;
 }
