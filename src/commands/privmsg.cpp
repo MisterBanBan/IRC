@@ -29,7 +29,7 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 			sendToClient(client_fd, response);
 			return true;
 		}
-		if (_channels[target].hasKey)
+		if (_channels[target].getHasKey())
 		{
 			//peut etre dautre chose a rajouter
 			std::string response = "404 " + target + "PRIVMSG :Cannot send to channel\r\n";

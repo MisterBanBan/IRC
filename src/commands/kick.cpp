@@ -38,7 +38,7 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, response);
 		return false;
 	}
-	if (!isOperator(client_fd, channel_name))
+	if (!_channels[channel_name].isOperator(client_fd))
 	{
 		std::string response = "482 " + channel_name + "INVITE :You're not channel operator\r\n";
 		sendToClient(client_fd, response);

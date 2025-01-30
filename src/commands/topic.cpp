@@ -34,7 +34,7 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, response);
 		return true;
 	}
-	if (_channels[name_channel].topicLocked && !isOperator(client_fd, name_channel))
+	if (_channels[name_channel].getTopicLocked() && !_channels[name_channel].isOperator(client_fd))
 	{
 		std::string response = "482 " + name_channel + "TOPIC: You're not channel operator\r\n";
 		sendToClient(client_fd, response);
