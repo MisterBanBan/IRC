@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   part.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:36 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 10:49:36 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/30 13:02:02 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,13 +31,13 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 		reason = "No reason";
 	if (_channels.find(channel_name) == _channels.end())
 	{
-		std::string response = "403 " + channel_name + " :No such channel\r\n";
+		std::string response = "403 " + channel_name + " PART: No such channel\r\n";
 		sendToClient(client_fd, response);
 		return false;
 	}
 	if (!_channels[channel_name].isMember(client_fd))
 	{
-		sendToClient(client_fd, "442 " + channel_name + " :You're not on that channel\r\n");
+		sendToClient(client_fd, "442 " + channel_name + " PART: You're not on that channel\r\n");
 		return false;
 	}
 	_channels[channel_name].removeMember(client_fd);
