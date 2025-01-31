@@ -31,18 +31,6 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 			return true;
 		}
 		Channel &chan = _channels[channelOrUser];
-		if (!chan.isMember(client_fd))
-		{
-			std::string response = "442 " + channelOrUser + " MODE :You're not on that channel\r\n";
-			sendToClient(client_fd, response);
-			return false;
-		}
-		if (!chan.isOperator(client_fd))
-		{
-			std::string response = "482 " + channelOrUser + " MODE :You're not channel operator\r\n";
-			sendToClient(client_fd, response);
-			return false;
-		}
 
 		if (modes.empty())
 		{
@@ -76,6 +64,20 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 				response += "\t\t- " + getNickname(*it) + "\r\n";
 			sendToClient(client_fd, response);
 			return true;
+		}
+
+		if (!chan.isMember(client_fd))
+		{
+			std::string response = "442 " + channelOrUser + " MODE :You're not on that channel\r\n";
+			sendToClient(client_fd, response);
+			return false;
+		}
+
+		if (!chan.isOperator(client_fd))
+		{
+			std::string response = "482 " + channelOrUser + " MODE :You're not channel operator\r\n";
+			sendToClient(client_fd, response);
+			return false;
 		}
 
 		bool add = false;
