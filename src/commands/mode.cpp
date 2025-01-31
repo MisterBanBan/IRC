@@ -166,6 +166,12 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 						std::string opUser;
 						if (!iss.eof())
 							iss >> opUser;
+						if (opUser.empty())
+						{
+							std::string response = "MODE :Not enough argument to set/remove an user's channel operator privilege\r\n";
+							sendToClient(client_fd, response);
+							continue;
+						}
 						int fd = getFdByNickname(opUser);
 						if (fd < 0)
 						{
@@ -197,7 +203,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 					{
 						std::string response = "501 :Unknown MODE flag\r\n";
 						sendToClient(client_fd, response);
-						break;
+						continue;
 					}
 				}
 			}
