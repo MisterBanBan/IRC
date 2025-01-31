@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:59 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/30 15:14:56 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/01/31 11:56:59 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,25 +18,25 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 	iss >> name_channel;
 	if (name_channel.empty())
 	{
-		std::string response = "461 TOPIC: Not enough parameters\r\n";
+		std::string response = "461 TOPIC :Not enough parameters\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
 	if (_channels.find(name_channel) == _channels.end())
 	{
-		std::string response = "403 " + name_channel + "TOPIC: No such channel\r\n";
+		std::string response = "403 " + name_channel + "TOPIC :No such channel\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
 	if (!_channels[name_channel].isMember(client_fd))
 	{
-		std::string response = "442 " + name_channel + "TOPIC: You're not on that channel\r\n";
+		std::string response = "442 " + name_channel + "TOPIC :You're not on that channel\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
 	if (_channels[name_channel].getTopicLocked() && !_channels[name_channel].isOperator(client_fd))
 	{
-		std::string response = "482 " + name_channel + "TOPIC: You're not channel operator\r\n";
+		std::string response = "482 " + name_channel + "TOPIC :You're not channel operator\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}

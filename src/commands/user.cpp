@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   user.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/29 13:37:32 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/31 11:56:31 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,27 +18,34 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 	iss >> user;
 	if (user.empty())
 	{
-		std::string response = "Error: No user given\r\n";
+		std::string response = "461 USER :Not enough parameters\r\n";
 		sendToClient(client_fd, response);
 		return true;
+	}
+	if (_clients[client_fd].is_authenticated || !_clients[client_fd].user.empty())
+	{
+		std::string response = "462 USER :You may not register\r\n";
+		sendToClient(client_fd, response);
+		return false;
 	}
 	std::getline(iss, realname);
 	if (!realname.empty())
 	{
 		while (!realname.empty() && (realname[0] == ' ' || realname[0] == ':'))
+		{
+			if (realname[0] == ':')
+			{
+				realname.erase(0, 1);
+				if (!realname.empty())
+					_clients[client_fd].realname = realname;
+			}
 			realname.erase(0, 1);
+		}
+
 	}
 	else
-		realname = "Unknown";
-
-	if (_clients[client_fd].is_authenticated || !_clients[client_fd].user.empty())
-	{
-		std::string response = "462 :You are already registered\r\n";
-		sendToClient(client_fd, response);
-		return false;
-	}
+			_clients[client_fd].realname = "Unknown";
 	_clients[client_fd].user = user;
-	_clients[client_fd].realname = realname;
 	if (!_clients[client_fd].nickname.empty())
 	{
 		_clients[client_fd].is_authenticated = true;

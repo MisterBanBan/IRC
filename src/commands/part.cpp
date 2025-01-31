@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:36 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/30 13:02:02 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/01/31 11:46:00 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 bool Server::part(std::istringstream &iss, int client_fd) {
 	std::string channel_name;
 	std::string reason;
+	iss >> channel_name;
 	if(channel_name.empty())
 	{
 		std::string response = "461 PART :Not enough parameters\r\n";

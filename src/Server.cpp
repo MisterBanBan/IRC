@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/17 12:43:53 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/01/31 11:47:41 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,6 @@ int	Server::initServerSocket(const std::string & port, const std::string & pass)
         std::cout << "<port> is 6667" << std::endl;
         return 1;
     }
-
 	char *end;
     int portInt = strtol(port.c_str(), &end, 10);
     if (*end != '\0')
@@ -300,7 +299,7 @@ int Server::getNbUser(int clients_fd, const std::string &channel)
 {
     int i = 0;
 	(void)clients_fd;
-    for (std::set<int>::iterator it = _channels[channel].getMembers().begin(); it != _channels[channel].getMembers().begin(); ++it)
+    for (std::set<int>::iterator it = _channels[channel].getMembers().begin(); it != _channels[channel].getMembers().end(); ++it)
         i++;
     return i;
 }

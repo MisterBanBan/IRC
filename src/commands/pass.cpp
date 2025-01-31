@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:00 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/30 13:19:51 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/01/31 11:56:13 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,12 +23,12 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 	}
 	if (_clients[client_fd].is_authenticated)
 	{
-		sendToClient(client_fd, "462 PASS:You are already registered\r\n");
+		sendToClient(client_fd, "462 PASS :You are already registered\r\n");
 		return true;
 	}
 	if (!isCorrectPasswordServer(pass))
 	{
-		std::string response = "464 PASS:Password incorrect\r\n";
+		std::string response = "464 PASS :Password incorrect\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
