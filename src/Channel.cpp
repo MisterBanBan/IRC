@@ -105,6 +105,10 @@ std::string Channel::getKey() const {
 }
 
 void Channel::setKey(const std::string & key) {
+	if (key.empty())
+		_hasKey = false;
+	else
+		_hasKey = true;
 	_key = key;
 }
 

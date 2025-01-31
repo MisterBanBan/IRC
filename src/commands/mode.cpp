@@ -43,6 +43,41 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 			sendToClient(client_fd, response);
 			return false;
 		}
+
+		if (modes.empty())
+		{
+			std::string response = "324 Current channel's (" + chan.getName() + ") modes:\r\n- Invite only: ";
+			if (chan.getInviteOnly())
+				response += "true\r\n";
+			else
+				response += "false\r\n";
+			response += "- Topic locked: ";
+			if (chan.getTopicLocked())
+				response += "true\r\n";
+			else
+				response += "false\r\n";
+			response += "- Key: ";
+			if (chan.getHasKey())
+				response += "true\r\n";
+			else
+				response += "false\r\n";
+			response += "- Users limit: ";
+			if (chan.getLimitUser())
+			{
+				std::stringstream ss;
+				ss << chan.getUserLimit();
+				response += (" " + ss.str() + "\r\n");
+			}
+			else
+				response += "0\r\n";
+			response += "- Operators:\r\n";
+			std::set<int>::iterator it;
+			for (it = chan.getOperators().begin(); it != chan.getOperators().end(); it++)
+				response += "\t\t- " + getNickname(*it) + "\r\n";
+			sendToClient(client_fd, response);
+			return true;
+		}
+
 		bool add = false;
 
 		while (!modes.empty())
@@ -83,7 +118,6 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 							{
 								if (chan.getKey().empty())
 								{
-									chan.setHasKey(true);
 									chan.setKey(key);
 									std::string response = "MODE :Pass added for " + chan.getName() + "\r\n";
 									sendToClient(client_fd, response);
@@ -106,7 +140,6 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 						}
 						else
 						{
-							chan.setHasKey(false);
 							chan.setKey("");
 							std::string response = "MODE :The pass for " + chan.getName() + " has been removed\r\n";
 							sendToClient(client_fd, response);
@@ -212,28 +245,11 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 			iss >> modes;
 		}
 	}
-	else
-	{
-		// TODO
-		int target = getFdByNickname(channelOrUser);
-		if (target < 0)
-		{
-			std::string response = "401 " + channelOrUser + "MODE :No such nick\r\n";
-			sendToClient(client_fd, response);
-			return true;
-		}
-		if (_clients.find(target) == _clients.end())
-		{
-			std::string response = "403 " + channelOrUser + "MODE :No such channel\r\n";
-			sendToClient(client_fd, response);
-			return true;
-		}
-	}
 
 	if (modes.empty())
 	{
-		std::string mode = "-i Set/Remove Channel to Invite Only \r\n -t : Set/remove TOPIC command restrictions for channel operators \r\n -k: Set/delete channel key (password) \r\n -o: Grant/withdraw channel operator privilege \r\n -l : Set/remove user limit for channel";
-		std::string response = mode + "324 " + channelOrUser + "MODE + (some modes)\r\n";
+		std::string mode = "-i: Set/Remove Channel to Invite Only \r\n-t: Set/remove TOPIC command restrictions for channel operators\r\n-k: Set/delete channel key (password)\r\n-o: Grant/withdraw channel operator privilege\r\n-l : Set/remove user limit for channel";
+		std::string response = mode + " 324 " + channelOrUser + " MODE + (some modes)\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
