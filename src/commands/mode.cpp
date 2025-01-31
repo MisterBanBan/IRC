@@ -169,15 +169,15 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 						int fd = getFdByNickname(opUser);
 						if (fd < 0)
 						{
-							std::string response = "401 " + channelOrUser + " :No such nick\r\n";
+							std::string response = "401 " + opUser + " :No such nick\r\n";
 							sendToClient(client_fd, response);
-							return true;
+							continue;
 						}
 						if (!chan.isMember(fd))
 						{
-							std::string response = "441 " + channelOrUser + " :They aren't on that channel\r\n";
+							std::string response = "441 " + opUser + " :They aren't on that channel\r\n";
 							sendToClient(client_fd, response);
-							return true;
+							continue;
 						}
 						if (add)
 						{
@@ -186,7 +186,11 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 							sendToClient(client_fd, response);
 						}
 						else
+						{
 							chan.getOperators().erase(fd);
+							std::string response = "MODE :Removed channel operator " + opUser + " from " + chan.getName() + "\r\n";
+							sendToClient(client_fd, response);
+						}
 						continue;
 					}
 					default:
