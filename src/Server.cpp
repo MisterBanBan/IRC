@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/31 11:47:41 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/01/31 12:04:37 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -420,3 +420,23 @@ Server &Server::operator=(const Server &other)
     }
     return(*this);
 }
+
+
+
+/*Selon la RFC, la séquence d’authentification impose parfois PASS avant NICK/USER, sinon le serveur répond 462 (« You may not reregister ») ou 464 (« Password incorrect »).
+Tu le gères déjà partiellement, mais vérifie que tout se comporte bien si la PASS est fausse ou si le client envoie NICK/USER avant PASS.
+
+ Gérer les événements POLLERR, POLLHUP, etc.
+Dans ton loop poll(), tu gères uniquement le cas POLLIN.
+Si un client se déconnecte brutalement ou s’il y a une autre erreur, tu peux aussi rencontrer des drapeaux comme POLLERR, POLLHUP, POLLNVAL.
+Dans ce cas, il faut faire un removeClient(client_fd) correctement.
+
+Actuellement, quand le dernier membre quitte un channel (via PART ou KICK), ton objet Channel reste en mémoire (_channels[channel_name]).
+Souvent, les serveurs IRC suppriment le channel de leurs structures internes si plus personne n’y est (canal éphémère).
+C’est un détail d’implémentation, mais cela évite d’accumuler des channels vides.
+
+
+Gérer plusieurs channels dans la même commande
+Selon la RFC, un client peut envoyer :
+``` JOIN #channel1,#channel2 key1,key2 PART #channel1,#channel2 :reason ```
+Dans ton code, tu ne prends qu’un seul channel_name. Si tu souhaites supporter la syntaxe complète, il faudra parser la ligne pour gérer la liste des channels (et éventuellement la liste des clés).*/
