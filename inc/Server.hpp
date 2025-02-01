@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/30 15:04:07 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/01 18:33:38 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,8 @@ class Server
         void sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
         bool isCorrectPasswordServer(const std::string &pass);
         int	getNbUser(int client_fd, const std::string &channel);
+        void handleWriteEvent(int client_fd);
+        void disableWriteEvent(int client_fd);
 
 		bool	nick(std::istringstream & iss, int client_fd);
 		bool	user(std::istringstream & iss, int client_fd);
@@ -56,7 +58,18 @@ class Server
 		bool	topic(std::istringstream & iss, int client_fd);
 		bool	invite(std::istringstream & iss, int client_fd);
 		bool	mode(std::istringstream & iss, int client_fd);
-
+        std::vector<std::string> split(const std::string &s, char delimiter)
+        {
+            std::vector<std::string> tokens;
+            std::istringstream iss(s);
+            std::string token;
+            while (std::getline(iss, token, delimiter))
+            {
+                if (!token.empty())
+                    tokens.push_back(token);
+            }
+            return tokens;
+        }
         void run();
         ~Server(void);
         Server &operator=(const Server &other);

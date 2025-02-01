@@ -23,6 +23,12 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 		sendToClient(client_fd, response);
 		return true;
 	}
+	if (_clients[client_fd].passWord == false)
+	{
+		std::string response = "NICK :Please enter a password\r\n";
+		sendToClient(client_fd, response);
+		return true;
+	}
 	int target_fd = getFdByNickname(nickname);
 	if (target_fd > 0)
 	{

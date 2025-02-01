@@ -6,17 +6,17 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:36 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/31 11:46:00 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/01 18:36:33 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
 bool Server::part(std::istringstream &iss, int client_fd) {
-	std::string channel_name;
+	std::string channel_str;
 	std::string reason;
-	iss >> channel_name;
-	if(channel_name.empty())
+	iss >> channel_str;
+	if(channel_str.empty())
 	{
 		std::string response = "461 PART :Not enough parameters\r\n";
 		sendToClient(client_fd, response);
@@ -30,27 +30,35 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 	}
 	if (reason.empty())
 		reason = "No reason";
-	if (_channels.find(channel_name) == _channels.end())
+	std::vector<std::string> channels = split(channel_str, ',');
+	for (size_t i = 0; i < channels.size(); i++)
 	{
-		std::string response = "403 " + channel_name + " PART: No such channel\r\n";
-		sendToClient(client_fd, response);
-		return false;
+		std::string channel_name = channels[i];
+		if (_channels.find(channel_name) == _channels.end())
+		{
+			std::string response = "403 " + channel_name + " PART: No such channel\r\n";
+			sendToClient(client_fd, response);
+			return false;
+		}
+		if (!_channels[channel_name].isMember(client_fd))
+		{
+			sendToClient(client_fd, "442 " + channel_name + " PART: You're not on that channel\r\n");
+			return false;
+		}
+		_channels[channel_name].removeMember(client_fd);
+		_clients[client_fd].channels.erase(channel_name);
+		std::string part_nick = _clients[client_fd].nickname;
+		std::stringstream msg;
+		msg << ":" << part_nick
+			<< " PART " << channel_name
+			<< " "     << part_nick
+			<< " :"    << reason
+			<< "\r\n";
+		broadcastToChannel(channel_name, msg.str());
+		sendToClient(client_fd, msg.str());
+		if (_channels[channel_name].getMembers().empty())
+			_channels.erase(channel_name);
 	}
-	if (!_channels[channel_name].isMember(client_fd))
-	{
-		sendToClient(client_fd, "442 " + channel_name + " PART: You're not on that channel\r\n");
-		return false;
-	}
-	_channels[channel_name].removeMember(client_fd);
-	_clients[client_fd].channels.erase(channel_name);
-	std::string part_nick = _clients[client_fd].nickname;
-	std::stringstream msg;
-	msg << ":" << part_nick
-		<< " PART " << channel_name
-		<< " "     << part_nick
-		<< " :"    << reason
-		<< "\r\n";
-	broadcastToChannel(channel_name, msg.str());
-	sendToClient(client_fd, msg.str());
+	
 	return true;
 }

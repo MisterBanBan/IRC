@@ -6,80 +6,93 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/30 15:03:21 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/01 18:33:20 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 // quand un client se co rajouter sil y a un topic le sujet du topic
+
 bool Server::join(std::istringstream &iss, int client_fd) {
-	std::string channel_name;
-	iss >> channel_name;
-	if (channel_name.empty())
+	std::string channel_str;
+	iss >> channel_str;
+	if (channel_str.empty())
 	{
 		std::string response = "JOIN: Not enough parameters\r\n";
 		sendToClient(client_fd, response);
 		return false;
 	}
 
-	if (channel_name[0] != '#')
+	std::vector<std::string> channels = split(channel_str, ',');
+	std::string keys_str;
+	iss >> keys_str;
+	std::vector<std::string> keys;
+	if (!keys_str.empty())
+		keys = split(keys_str, ',');
+		
+	for (size_t i = 0; i < channels.size(); i++)
 	{
-		std::string response = "JOIN: Channel format -> <#channel>\r\n";
-		sendToClient(client_fd, response);
-		return false;
-	}
-
-	if (_channels.find(channel_name) == _channels.end())
-	{
-		Channel newChannel(channel_name);
-		newChannel.addMember(client_fd);
-		_channels[channel_name] = newChannel;
-		_channels[channel_name].getOperators().insert(client_fd);
-	}
-	else
-	{
-		if (_channels[channel_name].getLimitUser() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
+		std::string channel_name = channels[i];
+		if (channel_name[0] == '#')
 		{
-			std::string response = "JOIN: This channel has reached its limit\r\n";
+			std::string response = "JOIN: Channel format -> <#channel>\r\n";
 			sendToClient(client_fd, response);
-			return false;
+			continue;
 		}
-
-		if (!_channels[channel_name].getInviteOnly())
+		if (_channels.find(channel_name) == _channels.end())
 		{
-			if (!_channels[channel_name].getHasKey())
-				_channels[channel_name].addMember(client_fd);
-			else
+			Channel newChannel(channel_name);
+			newChannel.addMember(client_fd);
+			_channels[channel_name] = newChannel;
+			_channels[channel_name].getOperators().insert(client_fd);
+		}
+		else
+		{
+			if (_channels[channel_name].getLimitUser() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
 			{
-				std::string pass;
-				iss >> pass;
-				if (_channels[channel_name].getKey() == pass)
+				std::string response = "JOIN: This channel has reached its limit\r\n";
+				sendToClient(client_fd, response);
+				return false;
+			}
+
+			if (!_channels[channel_name].getInviteOnly())
+			{
+				if (!_channels[channel_name].getHasKey())
 					_channels[channel_name].addMember(client_fd);
 				else
 				{
-					std::string response;
-					if (pass.empty())
-						response = "JOIN: This channel needs a pass (JOIN #channel <pass>)\r\n";
+					std::string pass;
+					iss >> pass;
+					if (_channels[channel_name].getKey() == pass)
+						_channels[channel_name].addMember(client_fd);
 					else
-						response = "JOIN: Invalid password\r\n";
+					{
+						std::string response;
+						if (pass.empty())
+							response = "JOIN: This channel needs a pass (JOIN #channel <pass>)\r\n";
+						else
+							response = "JOIN: Invalid password\r\n";
+						sendToClient(client_fd, response);
+						return false;
+					}
+				}
+			}
+			else
+			{
+				if (!_channels[channel_name].isInvited(client_fd))
+				{
+					std::string response = "JOIN: This channel " + channel_name + " is on INVITE only\r\n";
 					sendToClient(client_fd, response);
 					return false;
 				}
 			}
 		}
-		else
-			if (!_channels[channel_name].isInvited(client_fd))
-			{
-				std::string response = "JOIN: This channel " + channel_name + " is on INVITE only\r\n";
-				sendToClient(client_fd, response);
-				return false;
-			}
+			_clients[client_fd].channels.insert(channel_name);
+			std::string response = ":" + _clients[client_fd].nickname
+								+ " JOIN "
+								+ channel_name
+								+ "\r\n";
+			sendToClient(client_fd, response);
 	}
-	_clients[client_fd].channels.insert(channel_name);
-	std::string response = ":" + _clients[client_fd].nickname
-						   + " JOIN "
-						   + channel_name
-						   + "\r\n";
-	sendToClient(client_fd, response);
 	return true;
 }

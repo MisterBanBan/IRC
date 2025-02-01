@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/31 12:04:37 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/01 17:47:10 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,19 +172,28 @@ void Server::run()
             std::cout << "Error: poll failde" << std::endl;
             break;
         }
-        for (size_t i = 0; i < _poll_fds.size(); ++i)
+        for (size_t i = 0; i < _poll_fds.size();)
         {
-            if (_poll_fds[i].revents & POLLIN)
+            int fd = _poll_fds[i].fd;
+            short revents = _poll_fds[i].revents;
+            // If errors or a disconnection (POLLERR, POLLHUP, POLLNVAL) are detected, the client is removed (which also removes the _poll_fds descriptor).
+            if (revents & (POLLERR | POLLHUP | POLLNVAL))
             {
-                if (_poll_fds[i].fd == _server_fd)
-                {
-                    acceptNewClient();
-                } 
-                else 
-                {
-                    clientData(_poll_fds[i].fd);
-                }
+                //As _poll_fds has been modified, we do not do any incrementation here
+                removeClient(fd);
+                continue;
             }
+            if (revents & POLLIN)
+            {
+                if (fd == _server_fd)
+                    acceptNewClient();
+                else 
+                    clientData(fd);
+            }
+            //If the write event (POLLOUT) is detected, we call the handleWriteEvent function to send the pending data to the buffer.
+            if (revents & POLLOUT)
+                handleWriteEvent(fd);
+            ++i;
         }
     }
     close(_server_fd);
@@ -381,10 +390,57 @@ std::string Server::getNickname(int clientFd) const
 
 void Server::sendToClient(int client_fd, const std::string &response)
 {
-    if (send(client_fd, response.c_str(), response.size(), 0) < 0)
+    _clients[client_fd].buffer_out += response;
+    for (size_t i = 0; i < _poll_fds.size(); ++i)
     {
-        std::cerr << "Error: send failed to FD " << client_fd << " (" << strerror(errno) << ")" << std::endl;
-        removeClient(client_fd);
+        if (_poll_fds[i].fd == client_fd)
+        {
+            _poll_fds[i].events |= POLLOUT;
+            break;
+        }
+    }
+}
+
+void Server::handleWriteEvent(int client_fd)
+{
+    Client &client = _clients[client_fd];
+    //If the output buffer is empty, there is nothing to send.
+    //We then deactivate the POLLOUT flag for this client.
+    if (client.buffer_out.empty())
+    {
+        disableWriteEvent(client_fd);
+        return;
+    }
+    //We attempt to send the contents of the output buffer to the socket.
+    ssize_t bytes_sent = send(client_fd, client.buffer_out.c_str(), client.buffer_out.size(), 0);
+    //If the sending was successful and a few bytes were transmitted
+    if (bytes_sent > 0)
+    {
+        client.buffer_out.erase(0, bytes_sent);
+        if (client.buffer_out.empty())
+            disableWriteEvent(client_fd);
+    }
+    else if (bytes_sent == -1)
+    {
+        //If the error is not EAGAIN or EWOULDBLOCK,This is a critical error and we delete the client.
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+        {
+            std::cerr << "Error: send failed to FD " << client_fd << " (" << strerror(errno) << ")" << std::endl;
+            removeClient(client_fd);
+        }
+        //Otherwise, EAGAIN or EWOULDBLOCK simply means that the socket is not ready to write at the moment, and we will wait for the next POLLOUT.
+    }
+}
+
+void Server::disableWriteEvent(int clients_fd)
+{
+    for (size_t i = 0; i < _poll_fds.size(); ++i)
+    {
+        if (_poll_fds[i].fd == clients_fd)
+        {
+            _poll_fds[i].events &= _poll_fds[i].events &= ~POLLOUT;
+            break;
+        }
     }
 }
 

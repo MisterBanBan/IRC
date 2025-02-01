@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:00 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/31 11:56:13 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/01 17:18:13 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 		return true;
 	}
 	std::string response = "NOTICE * :Password accepted\r\n";
+	_clients[client_fd].passWord = true;
 	sendToClient(client_fd, response);
 	return true;
 }
