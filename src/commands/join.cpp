@@ -6,14 +6,15 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/01 18:45:17 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/01 18:47:44 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 // quand un client se co rajouter sil y a un topic le sujet du topic
 
-bool Server::join(std::istringstream &iss, int client_fd) {
+bool Server::join(std::istringstream &iss, int client_fd)
+{
 	std::string channel_str;
 	iss >> channel_str;
 	if (channel_str.empty())
