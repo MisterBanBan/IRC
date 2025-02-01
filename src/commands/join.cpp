@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/01 18:33:20 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/01 18:45:17 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ bool Server::join(std::istringstream &iss, int client_fd) {
 	for (size_t i = 0; i < channels.size(); i++)
 	{
 		std::string channel_name = channels[i];
-		if (channel_name[0] == '#')
+		if (channel_name[0] != '#')
 		{
 			std::string response = "JOIN: Channel format -> <#channel>\r\n";
 			sendToClient(client_fd, response);
@@ -61,14 +61,13 @@ bool Server::join(std::istringstream &iss, int client_fd) {
 					_channels[channel_name].addMember(client_fd);
 				else
 				{
-					std::string pass;
-					iss >> pass;
-					if (_channels[channel_name].getKey() == pass)
-						_channels[channel_name].addMember(client_fd);
+					std::string provided_key = (i < keys.size()) ? keys[i] : "";
+                    if (_channels[channel_name].getKey() == provided_key)
+                        _channels[channel_name].addMember(client_fd);
 					else
 					{
 						std::string response;
-						if (pass.empty())
+						if (provided_key.empty())
 							response = "JOIN: This channel needs a pass (JOIN #channel <pass>)\r\n";
 						else
 							response = "JOIN: Invalid password\r\n";
@@ -83,16 +82,17 @@ bool Server::join(std::istringstream &iss, int client_fd) {
 				{
 					std::string response = "JOIN: This channel " + channel_name + " is on INVITE only\r\n";
 					sendToClient(client_fd, response);
-					return false;
+					continue;
 				}
+				_channels[channel_name].addMember(client_fd);
 			}
 		}
-			_clients[client_fd].channels.insert(channel_name);
-			std::string response = ":" + _clients[client_fd].nickname
-								+ " JOIN "
-								+ channel_name
-								+ "\r\n";
-			sendToClient(client_fd, response);
+		_clients[client_fd].channels.insert(channel_name);
+		std::string response = ":" + _clients[client_fd].nickname
+							+ " JOIN "
+							+ channel_name
+							+ "\r\n";
+		sendToClient(client_fd, response);
 	}
 	return true;
 }
