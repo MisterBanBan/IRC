@@ -248,12 +248,5 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 		}
 	}
 
-	if (modes.empty())
-	{
-		std::string mode = "-i: Set/Remove Channel to Invite Only \r\n-t: Set/remove TOPIC command restrictions for channel operators\r\n-k: Set/delete channel key (password)\r\n-o: Grant/withdraw channel operator privilege\r\n-l : Set/remove user limit for channel";
-		std::string response = mode + " 324 " + channelOrUser + " MODE + (some modes)\r\n";
-		sendToClient(client_fd, response);
-		return true;
-	}
 	return true;
 }
