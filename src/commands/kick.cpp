@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:26 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:30:37 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/03 16:02:48 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,5 +81,7 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 		<< "\r\n";
 	broadcastToChannel(channel_name, msg.str());
 	sendToClient(target_fd, msg.str());
+	if (_channels[channel_name].getMembers().empty())
+		_channels.erase(channel_name);
 	return true;
 }

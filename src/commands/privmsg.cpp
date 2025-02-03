@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:30:37 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/03 16:44:58 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,17 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 		std::string response = "411 PRIVMSG :No recipient given\r\n";
 		sendToClient(client_fd, response);
 		return false;
+	}
+
+	if (target == "Bot")
+	{
+		std::string botMsg;
+        std::getline(iss, botMsg);
+        while (!botMsg.empty() && (botMsg[0] == ' ' || botMsg[0] == ':')) {
+            botMsg.erase(0, 1);
+        }
+        processBotMessage(client_fd, botMsg);
+        return true;
 	}
 
 	if (target == _clients[client_fd].nickname)

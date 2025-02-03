@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:30:58 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/03 17:19:36 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,11 @@ class Server
 		bool	topic(std::istringstream & iss, int client_fd);
 		bool	invite(std::istringstream & iss, int client_fd);
 		bool	mode(std::istringstream & iss, int client_fd);
+        bool    cap(std::istringstream &iss, int client_fd);
+        bool    who(std::istringstream &iss, int client_fd);
+        bool    quit(std::istringstream &iss, int client_fd);
+        void    processBotMessage(int client_fd, const std::string &msg);
+        
         std::vector<std::string> split(const std::string &s, char delimiter)
         {
             std::vector<std::string> tokens;
