@@ -30,7 +30,8 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 	{
 		std::string response = "464 PASS :Password incorrect\r\n";
 		sendToClient(client_fd, response);
-		return true;
+		removeClient(client_fd);
+		return false;
 	}
 	std::string response = "NOTICE * :Password accepted\r\n";
 	_clients[client_fd].passWord = true;
