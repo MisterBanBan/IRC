@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/01 17:47:10 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/03 13:47:50 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,7 @@ int	Server::initServerSocket(const std::string & port, const std::string & pass)
     // bind "attach" the socket to a port on the machine a socket has no address or port defined, and therefore cannot receive connections
     if (bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        std::cout << "Error: bind failed" << std::endl;
+        std::cout << "Error: bind failed (" << strerror(errno) << ")" << std::endl;
         return 1;
     }
     //SOMAXCONN allows to define the max possible connexion is generally 128 
@@ -153,6 +153,7 @@ void Server::acceptNewClient()
     Client new_client;
     new_client.fd = client_fd;
     new_client.is_authenticated = false;
+	new_client.right_pass = false;
     _clients[client_fd] = new_client;
 
     std::cout << "New connexion accepted. FD = " << client_fd << std::endl;
@@ -370,7 +371,7 @@ void Server::broadcastToChannel(const std::string &channel_name, const std::stri
         sendToClient(*it, message);
 }
 
-int Server::getFdByNickname(const std::string target)
+int Server::getFdByNickname(const std::string & target)
 {
     for (std::map<int, Client>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
@@ -475,6 +476,26 @@ Server &Server::operator=(const Server &other)
         _clients = other._clients;
     }
     return(*this);
+}
+
+void Server::authenticate(int client_fd) {
+	Client *client;
+
+	client = &_clients[client_fd];
+	if (client->right_pass && !client->user.empty())
+	{
+		client->is_authenticated = true;
+		sendToClient(client_fd, ":server 001 " + _clients[client_fd].nickname + " :Welcome!\r\n");
+	}
+	else
+	{
+		if (!client->right_pass)
+			sendToClient(client_fd, "Need a password to be fully authenticated (/PASS <password>)\r\n");
+		if (client->user.empty())
+			sendToClient(client_fd, "Need an username to be fully authenticated (/USER <username> 0 * <realname>)\r\n");
+		if (client->nickname.empty())
+			sendToClient(client_fd, "Need a nickname to be fully authenticated (/NICK <nickname>)\r\n");
+	}
 }
 
 

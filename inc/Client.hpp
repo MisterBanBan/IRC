@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/02/03 13:30:34 by mbaron-t          #+#    #+#             */
+/*   Updated: 2025/02/03 13:30:34 by mbaron-t         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
@@ -14,6 +26,7 @@ class Client
         std::string user;
         std::string realname;
         bool is_authenticated;
+		bool right_pass;
         std::string ip;
         int port;
         std::set<std::string> channels;

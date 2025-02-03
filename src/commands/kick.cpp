@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:26 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 10:18:00 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/03 14:30:37 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,14 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 	std::string target_nick;
 	std::string reason;
 	iss >> channel_name >> target_nick >> reason;
+
+	if (!_clients[client_fd].is_authenticated)
+	{
+		std::string response = "JOIN: You need to be authenticated to do that\r\n";
+		sendToClient(client_fd, response);
+		return false;
+	}
+
 	if(channel_name.empty() || target_nick.empty())
 	{
 		std::string response = "KICK :Not enough parameters\r\n";

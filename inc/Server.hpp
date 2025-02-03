@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/01 18:33:38 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/03 14:30:58 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,19 +34,20 @@ class Server
     public:
         Server(void);
         Server(const Server &other);
-        int	initServerSocket(const std::string & port, const std::string & pass);
-        void acceptNewClient();
-        void clientData(int client_fd);
-        void sendToClient(int client_fd, const std::string &reponse);
-        void removeClient(int client_fd);
-        int getFdByNickname(const std::string target);
+        int		initServerSocket(const std::string & port, const std::string & pass);
+        void	acceptNewClient();
+        void	clientData(int client_fd);
+        void	sendToClient(int client_fd, const std::string &reponse);
+        void	removeClient(int client_fd);
+        int		getFdByNickname(const std::string & target);
         std::string getNickname(int clientFd) const;
-        void broadcastToChannel(const std::string &channel_name, const std::string &message);
-        void sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
-        bool isCorrectPasswordServer(const std::string &pass);
-        int	getNbUser(int client_fd, const std::string &channel);
-        void handleWriteEvent(int client_fd);
-        void disableWriteEvent(int client_fd);
+        void	broadcastToChannel(const std::string &channel_name, const std::string &message);
+        void	sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
+        bool	isCorrectPasswordServer(const std::string &pass);
+        int		getNbUser(int client_fd, const std::string &channel);
+        void	handleWriteEvent(int client_fd);
+        void	disableWriteEvent(int client_fd);
+		void	authenticate(int client_fd);
 
 		bool	nick(std::istringstream & iss, int client_fd);
 		bool	user(std::istringstream & iss, int client_fd);

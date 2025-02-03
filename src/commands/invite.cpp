@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:09 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/29 17:32:58 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/03 14:30:37 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,13 @@ bool Server::invite(std::istringstream &iss, int client_fd)
 	//rajouter les invitations
 	std::string nickname, channelName;
 	iss >> nickname >> channelName;
+
+	if (!_clients[client_fd].is_authenticated)
+	{
+		std::string response = "JOIN: You need to be authenticated to do that\r\n";
+		sendToClient(client_fd, response);
+		return false;
+	}
 	if (nickname.empty() || channelName.empty())
 	{
 		std::string response = "461 INVITE :Not enough parameters\r\n";

@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:00 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/01 17:18:13 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/03 14:05:40 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,9 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, response);
 		return true;
 	}
-	if (_clients[client_fd].is_authenticated)
+	if (_clients[client_fd].is_authenticated || _clients[client_fd].right_pass)
 	{
-		sendToClient(client_fd, "462 PASS :You are already registered\r\n");
+		sendToClient(client_fd, "462 PASS :You may not reregister\r\n");
 		return true;
 	}
 	if (!isCorrectPasswordServer(pass))
@@ -33,7 +33,13 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 		removeClient(client_fd);
 		return false;
 	}
+
+	_clients[client_fd].right_pass = true;
+
 	std::string response = "NOTICE * :Password accepted\r\n";
 	sendToClient(client_fd, response);
+
+	authenticate(client_fd);
+
 	return true;
 }

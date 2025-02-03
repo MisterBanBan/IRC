@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 12:06:37 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/03 14:28:08 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 	}
 	if (_clients[client_fd].is_authenticated || !_clients[client_fd].user.empty())
 	{
-		std::string response = "462 USER :You may not register\r\n";
+		std::string response = "462 USER :You may not reregister\r\n";
 		sendToClient(client_fd, response);
 		return false;
 	}
@@ -43,20 +43,18 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 		}
 	}
 	else
-			_clients[client_fd].realname = "Unknown";
+		_clients[client_fd].realname = "Unknown";
+
 	_clients[client_fd].user = user;
-	if (!_clients[client_fd].nickname.empty())
-	{
-		_clients[client_fd].is_authenticated = true;
-		sendToClient(client_fd, ":server 001 " + _clients[client_fd].nickname + " :Welcome!\r\n");
-	}
-	else
-		sendToClient(client_fd, ":server NOTICE * :Please set your NICK\r\n");
+
 	std::stringstream ss;
 	ss << "USER command from FD " << client_fd
 	   << " => username: " << _clients[client_fd].user
 	   << ", realname: " << _clients[client_fd].realname;
 	std::string response = ss.str() + "\r\n";
 	sendToClient(client_fd, response);
+
+	authenticate(client_fd);
+
 	return true;
 }
