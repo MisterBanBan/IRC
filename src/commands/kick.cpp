@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:26 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/29 17:33:28 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/03 10:18:00 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,13 +34,13 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 		reason = "No reason";
 	if (_channels.find(channel_name) == _channels.end())
 	{
-		std::string response = "403 " + channel_name + "INVITE :No such channel\r\n";
+		std::string response = "403 " + channel_name + "KICK :No such channel\r\n";
 		sendToClient(client_fd, response);
 		return false;
 	}
 	if (!_channels[channel_name].isOperator(client_fd))
 	{
-		std::string response = "482 " + channel_name + "INVITE :You're not channel operator\r\n";
+		std::string response = "482 " + channel_name + "KICK :You're not channel operator\r\n";
 		sendToClient(client_fd, response);
 		return false;
 	}
@@ -52,7 +52,7 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 	}
 	if (!_channels[channel_name].isMember(target_fd))
 	{
-		std::string response = "441 " + channel_name + "INVITE :They aren't on that channel\r\n";
+		std::string response = "441 " + channel_name + "KICK :They aren't on that channel\r\n";
 		sendToClient(client_fd, response);
 		return false;
 	}

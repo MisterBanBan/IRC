@@ -22,9 +22,9 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, response);
 		return true;
 	}
-	if (_clients[client_fd].passWord == false)
+	if (!_clients[client_fd].passWord)
 	{
-		std::string response = "NICK :Please enter a password\r\n";
+		std::string response = "USER :Please enter a password\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
