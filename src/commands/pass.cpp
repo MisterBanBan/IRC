@@ -34,7 +34,6 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 		return false;
 	}
 	std::string response = "NOTICE * :Password accepted\r\n";
-	_clients[client_fd].passWord = true;
 	sendToClient(client_fd, response);
 	return true;
 }
