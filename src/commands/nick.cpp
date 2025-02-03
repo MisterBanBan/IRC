@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:43 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 11:15:01 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/03 12:06:42 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,6 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 	if (nickname.empty())
 	{
 		std::string response = "431 :No nickname given\r\n";
-		sendToClient(client_fd, response);
-		return true;
-	}
-	if (_clients[client_fd].passWord == false)
-	{
-		std::string response = "NICK :Please enter a password\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}

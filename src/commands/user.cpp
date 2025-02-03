@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/31 18:46:36 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/03 12:06:37 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,12 +19,6 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 	if (user.empty())
 	{
 		std::string response = "461 USER :Not enough parameters\r\n";
-		sendToClient(client_fd, response);
-		return true;
-	}
-	if (!_clients[client_fd].passWord)
-	{
-		std::string response = "USER :Please enter a password\r\n";
 		sendToClient(client_fd, response);
 		return true;
 	}
