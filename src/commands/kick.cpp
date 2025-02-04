@@ -79,7 +79,7 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 		<< " "     << target_nick
 		<< " :"    << reason
 		<< "\r\n";
-	broadcastToChannel(channel_name, msg.str());
+	broadcastToChannel(channel_name, msg.str(), -1);
 	sendToClient(target_fd, msg.str());
 	if (_channels[channel_name].getMembers().empty())
 		_channels.erase(channel_name);

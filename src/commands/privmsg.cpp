@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 16:44:58 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/04 12:40:20 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,14 +65,15 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 		{
 			if (msg[0] == ':')
 			{
-				msg.erase(0, 1);
 				if (msg.empty())
 				{
 					std::string response = "412 PRIVMSG :No text to send\r\n";
 					sendToClient(client_fd, response);
 					return true;
 				}
-				broadcastToChannel(target, msg);
+				std::stringstream response;
+				response << ":" << _clients[client_fd].getNickname() << " PRIVMSG " << target << " " << msg << "\r\n";
+				broadcastToChannel(target, response.str(), client_fd);
 				return true;
 			}
 			msg.erase(0, 1);

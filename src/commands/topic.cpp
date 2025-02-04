@@ -75,7 +75,7 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 			{
 				_channels[name_channel].setTopic(topic);
 				std::string msg = ":" + getNickname(client_fd) + " TOPIC " + name_channel + " :" + topic + "\r\n";
-				broadcastToChannel(name_channel, msg);
+				broadcastToChannel(name_channel, msg, -1);
 				return true;
 			}
 		}

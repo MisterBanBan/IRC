@@ -142,7 +142,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 										<< " +t"
 										<< ""
 										<< "\r\n";
-								broadcastToChannel(chan.getName(), response.str());
+								broadcastToChannel(chan.getName(), response.str(), -1);
 							}
 						}
 						else
@@ -154,7 +154,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 									<< " -t"
 									<< ""
 									<< "\r\n";
-							broadcastToChannel(chan.getName(), response.str());
+							broadcastToChannel(chan.getName(), response.str(), -1);
 						}
 						continue;
 					}

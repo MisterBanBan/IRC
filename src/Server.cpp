@@ -380,14 +380,15 @@ bool Server::isCorrectPasswordServer(const std::string &pass)
     return false;
 }
 
-void Server::broadcastToChannel(const std::string &channel_name, const std::string &message)
+void Server::broadcastToChannel(const std::string &channel_name, const std::string &message, int to_ignore)
 {
     if(_channels.find(channel_name) == _channels.end())
         return ;
 
     std::set<int> members = _channels[channel_name].getMembers();
     for (std::set<int>::iterator it = members.begin(); it != members.end(); ++it)
-        sendToClient(*it, message);
+		if (*it != to_ignore)
+        	sendToClient(*it, message);
 }
 
 int Server::getFdByNickname(const std::string & target)

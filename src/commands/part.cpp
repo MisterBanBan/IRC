@@ -53,8 +53,6 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 			sendToClient(client_fd, "442 " + channel_name + " PART: You're not on that channel\r\n");
 			return false;
 		}
-		_channels[channel_name].removeMember(client_fd);
-		_clients[client_fd].channels.erase(channel_name);
 		std::string part_nick = _clients[client_fd].nickname;
 		std::stringstream msg;
 		msg << ":" << part_nick
@@ -62,8 +60,9 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 			<< " "     << part_nick
 			<< " :"    << reason
 			<< "\r\n";
-		broadcastToChannel(channel_name, msg.str());
-		sendToClient(client_fd, msg.str());
+		broadcastToChannel(channel_name, msg.str(), -1);
+		_channels[channel_name].removeMember(client_fd);
+		_clients[client_fd].channels.erase(channel_name);
 		if (_channels[channel_name].getMembers().empty())
 			_channels.erase(channel_name);
 	}
