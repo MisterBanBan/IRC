@@ -8,7 +8,7 @@ bool Server::quit(std::istringstream &iss, int client_fd)
         quitMsg = "Client Quit";
     std::string nick = getNickname(client_fd);
     std::string msg = ":" + nick + " QUIT :" + quitMsg + "\r\n";
-    for (std::set<std::string>::iterator it = _clients[client_fd].channels.begin(); it != _clients[client_fd].channels.end(); ++it)
+    for (std::set<std::string>::iterator it = _clients[client_fd].getChannels().begin(); it != _clients[client_fd].getChannels().end(); ++it)
          broadcastToChannel(*it, msg, -1);
     removeClient(client_fd);
     return true;

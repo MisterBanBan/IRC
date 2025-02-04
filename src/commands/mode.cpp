@@ -16,7 +16,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 	std::string channelOrUser, modes;
 	iss >> channelOrUser >> modes;
 
-	if (!_clients[client_fd].is_authenticated)
+	if (!_clients[client_fd].isAuthenticated())
 	{
 		std::string response = "JOIN: You need to be authenticated to do that\r\n";
 		sendToClient(client_fd, response);
@@ -85,7 +85,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 
 			std::stringstream response;
 
-			response << ":localhost 442 " << _clients[client_fd].nickname << chan.getName() << " :You're not on that channel\r\n";
+			response << ":localhost 442 " << _clients[client_fd].getNickname() << chan.getName() << " :You're not on that channel\r\n";
 			sendToClient(client_fd, response.str());
 			return false;
 		}
@@ -137,7 +137,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 							{
 								chan.setKey(key);
 								std::stringstream response;
-								response << ":" << _clients[client_fd].nickname
+								response << ":" << _clients[client_fd].getNickname()
 										<< " MODE " << chan.getName()
 										<< " +t"
 										<< ""
@@ -149,7 +149,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 						{
 							chan.setKey("");
 							std::stringstream response;
-							response << ":" << _clients[client_fd].nickname
+							response << ":" << _clients[client_fd].getNickname()
 									<< " MODE " << chan.getName()
 									<< " -t"
 									<< ""

@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
-#include "Client.hpp"
 
 bool Server::nick(std::istringstream & iss, int client_fd)
 {
@@ -28,15 +27,15 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 	{
 		std::string response = "433 NICK :Nickname is already in use\r\n";
 		sendToClient(client_fd, response);
-		if (!_clients[client_fd].is_authenticated)
+		if (!_clients[client_fd].isAuthenticated())
 			removeClient(client_fd);
 		return true;
 	}
-	_clients[client_fd].nickname = nickname;
+	_clients[client_fd].setNickname(nickname);
 	std::string response = "Nickname set to " + nickname + "\r\n";
 	sendToClient(client_fd, response);
 
-	if (!_clients[client_fd].is_authenticated)
+	if (!_clients[client_fd].isAuthenticated())
 		authenticate(client_fd);
 
 	return true;

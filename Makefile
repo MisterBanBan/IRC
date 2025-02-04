@@ -9,6 +9,7 @@ INC_DIR := inc
 # Liste des fichiers sources
 SRC := $(SRC_DIR)/Irc.cpp \
        $(SRC_DIR)/Server.cpp \
+       $(SRC_DIR)/Client.cpp \
 	   $(SRC_DIR)/Channel.cpp \
 	   $(CMDS_DIR)/invite.cpp \
 	   $(CMDS_DIR)/join.cpp \
@@ -31,7 +32,7 @@ DEPS := $(patsubst $(BUILD_DIR)/%.o, $(DEPS_DIR)/%.d, $(OBJS))
 
 # Compilateur et flags
 CC := c++
-CFLAGS := -Wall -Wextra -Werror -std=c++98
+CFLAGS := -Wall -Wextra -Werror -std=c++98 -g
 CPPFLAGS := -MD -MP -I $(INC_DIR)
 
 # Commande de suppression

@@ -19,7 +19,7 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 	std::string reason;
 	iss >> channel_name >> target_nick >> reason;
 
-	if (!_clients[client_fd].is_authenticated)
+	if (!_clients[client_fd].isAuthenticated())
 	{
 		std::string response = "JOIN: You need to be authenticated to do that\r\n";
 		sendToClient(client_fd, response);
@@ -71,8 +71,8 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 		return false;
 	}
 	_channels[channel_name].removeMember(target_fd);
-	_clients[target_fd].channels.erase(channel_name);
-	std::string kicker_nick = _clients[client_fd].nickname;
+	_clients[target_fd].getChannels().erase(channel_name);
+	std::string kicker_nick = _clients[client_fd].getNickname();
 	std::stringstream msg;
 	msg << ":" << kicker_nick
 		<< " KICK " << channel_name

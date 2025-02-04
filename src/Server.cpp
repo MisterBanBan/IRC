@@ -150,13 +150,11 @@ void Server::acceptNewClient()
     server_pollfd.revents = 0;
     _poll_fds.push_back(server_pollfd);
 
-    Client new_client;
-    new_client.fd = client_fd;
-    new_client.is_authenticated = false;
-	new_client.right_pass = false;
+    Client new_client(client_fd);
     _clients[client_fd] = new_client;
 
     std::cout << "New connexion accepted. FD = " << client_fd << std::endl;
+	authenticate(client_fd);
 
 }
 
@@ -221,14 +219,14 @@ void Server::clientData(int client_fd)
         }
     }
 
-    _clients[client_fd].buffer_in.append(buffer, receive);
+    _clients[client_fd].getBufferIn().append(buffer, receive);
 
 	size_t pos;
 
-	while ((pos = _clients[client_fd].buffer_in.find("\n")) != std::string::npos)
+	while ((pos = _clients[client_fd].getBufferIn().find("\n")) != std::string::npos)
 	{
-		std::string command = _clients[client_fd].buffer_in.substr(0, pos);
-		_clients[client_fd].buffer_in.erase(0, pos + 1);
+		std::string command = _clients[client_fd].getBufferIn().substr(0, pos);
+		_clients[client_fd].getBufferIn().erase(0, pos + 1);
 
         std::cout << "Command received : " << command << std::endl;
 
@@ -411,7 +409,7 @@ std::string Server::getNickname(int clientFd) const
 
 void Server::sendToClient(int client_fd, const std::string &response)
 {
-    _clients[client_fd].buffer_out += response;
+    _clients[client_fd].getBufferOut() += response;
     for (size_t i = 0; i < _poll_fds.size(); ++i)
     {
         if (_poll_fds[i].fd == client_fd)
@@ -427,18 +425,18 @@ void Server::handleWriteEvent(int client_fd)
     Client &client = _clients[client_fd];
     //If the output buffer is empty, there is nothing to send.
     //We then deactivate the POLLOUT flag for this client.
-    if (client.buffer_out.empty())
+    if (client.getBufferOut().empty())
     {
         disableWriteEvent(client_fd);
         return;
     }
     //We attempt to send the contents of the output buffer to the socket.
-    ssize_t bytes_sent = send(client_fd, client.buffer_out.c_str(), client.buffer_out.size(), 0);
+    ssize_t bytes_sent = send(client_fd, client.getBufferOut().c_str(), client.getBufferOut().size(), 0);
     //If the sending was successful and a few bytes were transmitted
     if (bytes_sent > 0)
     {
-        client.buffer_out.erase(0, bytes_sent);
-        if (client.buffer_out.empty())
+        client.getBufferOut().erase(0, bytes_sent);
+        if (client.getBufferOut().empty())
             disableWriteEvent(client_fd);
     }
     else if (bytes_sent == -1)
@@ -502,18 +500,18 @@ void Server::authenticate(int client_fd) {
 	Client *client;
 
 	client = &_clients[client_fd];
-	if (client->right_pass && !client->user.empty() && !client->nickname.empty())
+	if (client->getRightPass() && !client->getUsername().empty() && !client->getNickname().empty())
 	{
-		client->is_authenticated = true;
-		sendToClient(client_fd, ":server 001 " + _clients[client_fd].nickname + " :Welcome!\r\n");
+		client->setAuthenticated(true);
+		sendToClient(client_fd, ":server 001 " + _clients[client_fd].getNickname() + " :Welcome!\r\n");
 	}
 	else
 	{
-		if (!client->right_pass)
+		if (!client->getRightPass())
 			sendToClient(client_fd, "Need a password to be fully authenticated (/PASS <password>)\r\n");
-		if (client->user.empty())
+		if (client->getUsername().empty())
 			sendToClient(client_fd, "Need an username to be fully authenticated (/USER <username> 0 * <realname>)\r\n");
-		if (client->nickname.empty())
+		if (client->getNickname().empty())
 			sendToClient(client_fd, "Need a nickname to be fully authenticated (/NICK <nickname>)\r\n");
 	}
 }

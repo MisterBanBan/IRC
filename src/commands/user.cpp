@@ -22,7 +22,7 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, response);
 		return true;
 	}
-	if (_clients[client_fd].is_authenticated || !_clients[client_fd].user.empty())
+	if (_clients[client_fd].isAuthenticated() || !_clients[client_fd].getUsername().empty())
 	{
 		std::string response = "462 USER :You may not reregister\r\n";
 		sendToClient(client_fd, response);
@@ -37,20 +37,20 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 			{
 				realname.erase(0, 1);
 				if (!realname.empty())
-					_clients[client_fd].realname = realname;
+					_clients[client_fd].setRealname(realname);
 			}
 			realname.erase(0, 1);
 		}
 	}
 	else
-		_clients[client_fd].realname = "Unknown";
+		_clients[client_fd].setRealname("Unknown");
 
-	_clients[client_fd].user = user;
+	_clients[client_fd].setUsername(user);
 
 	std::stringstream ss;
 	ss << "USER command from FD " << client_fd
-	   << " => username: " << _clients[client_fd].user
-	   << ", realname: " << _clients[client_fd].realname;
+	   << " => username: " << _clients[client_fd].getUsername()
+	   << ", realname: " << _clients[client_fd].getRealname();
 	std::string response = ss.str() + "\r\n";
 	sendToClient(client_fd, response);
 

@@ -17,7 +17,7 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 	std::string reason;
 	iss >> channel_str;
 
-	if (!_clients[client_fd].is_authenticated)
+	if (!_clients[client_fd].isAuthenticated())
 	{
 		std::string response = "JOIN: You need to be authenticated to do that\r\n";
 		sendToClient(client_fd, response);
@@ -53,7 +53,7 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 			sendToClient(client_fd, "442 " + channel_name + " PART: You're not on that channel\r\n");
 			return false;
 		}
-		std::string part_nick = _clients[client_fd].nickname;
+		std::string part_nick = _clients[client_fd].getNickname();
 		std::stringstream msg;
 		msg << ":" << part_nick
 			<< " PART " << channel_name
@@ -62,7 +62,7 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 			<< "\r\n";
 		broadcastToChannel(channel_name, msg.str(), -1);
 		_channels[channel_name].removeMember(client_fd);
-		_clients[client_fd].channels.erase(channel_name);
+		_clients[client_fd].getChannels().erase(channel_name);
 		if (_channels[channel_name].getMembers().empty())
 			_channels.erase(channel_name);
 	}

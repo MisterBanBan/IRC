@@ -16,7 +16,7 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 	std::string target;
 	iss >> target;
 
-	if (!_clients[client_fd].is_authenticated)
+	if (!_clients[client_fd].isAuthenticated())
 	{
 		std::string response = "JOIN: You need to be authenticated to do that\r\n";
 		sendToClient(client_fd, response);
@@ -41,7 +41,7 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
         return true;
 	}
 
-	if (target == _clients[client_fd].nickname)
+	if (target == _clients[client_fd].getNickname())
 		return false;
 
 	if (target.size() > 0 && target[0] == '#')

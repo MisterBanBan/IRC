@@ -17,7 +17,7 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 	std::string name_channel;
 	iss >> name_channel;
 
-	if (!_clients[client_fd].is_authenticated)
+	if (!_clients[client_fd].isAuthenticated())
 	{
 		std::string response = "JOIN: You need to be authenticated to do that\r\n";
 		sendToClient(client_fd, response);

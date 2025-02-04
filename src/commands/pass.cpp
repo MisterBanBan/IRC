@@ -21,7 +21,7 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, response);
 		return true;
 	}
-	if (_clients[client_fd].is_authenticated || _clients[client_fd].right_pass)
+	if (_clients[client_fd].isAuthenticated() || _clients[client_fd].getRightPass())
 	{
 		sendToClient(client_fd, "462 PASS :You may not reregister\r\n");
 		return true;
@@ -34,7 +34,7 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 		return false;
 	}
 
-	_clients[client_fd].right_pass = true;
+	_clients[client_fd].setRightPass(true);
 
 	std::string response = "NOTICE * :Password accepted\r\n";
 	sendToClient(client_fd, response);

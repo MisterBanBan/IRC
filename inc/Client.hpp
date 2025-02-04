@@ -18,20 +18,37 @@
 
 class Client
 {
-    public:
-        int fd;
-        std::string buffer_in;
-        std::string buffer_out;
-        std::string nickname;
-        std::string user;
-        std::string realname;
-        bool is_authenticated;
-		bool right_pass;
-        std::string ip;
-        int port;
-        std::set<std::string> channels;
-        std::string getNickname() const { return nickname; }
-    private:
+public:
+	Client();
+	Client(int fd);
+	~Client();
+
+	int						getFd() const;
+	std::string&			getBufferIn();
+	std::string&			getBufferOut();
+	std::string				getNickname() const;
+	std::string				getUsername() const;
+	std::string				getRealname() const;
+	bool					isAuthenticated() const;
+	bool					getRightPass() const;
+	std::set<std::string>&	getChannels();
+
+	void		setNickname(const std::string & nickname);
+	void		setUsername(const std::string & username);
+	void		setRealname(const std::string & realname);
+	void		setAuthenticated(bool active);
+	void		setRightPass(bool active);
+
+private:
+	int						_fd;
+	std::string 			_buffer_in;
+	std::string 			_buffer_out;
+	std::string 			_nickname;
+	std::string 			_username;
+	std::string 			_realname;
+	bool					_is_authenticated;
+	bool					_right_pass;
+	std::set<std::string>	_channels;
 };
 
 #endif

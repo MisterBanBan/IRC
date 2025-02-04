@@ -18,7 +18,7 @@ bool Server::join(std::istringstream &iss, int client_fd)
 	std::string channel_str;
 	iss >> channel_str;
 
-	if (!_clients[client_fd].is_authenticated)
+	if (!_clients[client_fd].isAuthenticated())
 	{
 		std::string response = "JOIN: You need to be authenticated to do that\r\n";
 		sendToClient(client_fd, response);
@@ -85,8 +85,8 @@ bool Server::join(std::istringstream &iss, int client_fd)
                 _channels[channel_name].addMember(client_fd);
             }
         }
-		_clients[client_fd].channels.insert(channel_name);
-		std::string response = ":" + _clients[client_fd].nickname
+		_clients[client_fd].getChannels().insert(channel_name);
+		std::string response = ":" + _clients[client_fd].getNickname()
 							+ " JOIN "
 							+ channel_name
 							+ "\r\n";
