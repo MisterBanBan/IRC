@@ -19,7 +19,11 @@ SRC := $(SRC_DIR)/Irc.cpp \
 	   $(CMDS_DIR)/pass.cpp \
 	   $(CMDS_DIR)/privmsg.cpp \
 	   $(CMDS_DIR)/topic.cpp \
-	   $(CMDS_DIR)/user.cpp
+	   $(CMDS_DIR)/user.cpp \
+	   $(CMDS_DIR)/cap.cpp \
+	   $(CMDS_DIR)/who.cpp \
+	   $(CMDS_DIR)/quit.cpp \
+	   $(CMDS_DIR)/bot.cpp
 
 # Génération des fichiers objets et des dépendances
 OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC))

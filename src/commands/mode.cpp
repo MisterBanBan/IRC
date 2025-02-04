@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:18 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:30:37 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/03 15:23:47 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,14 +70,23 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 			std::set<int>::iterator it;
 			for (it = chan.getOperators().begin(); it != chan.getOperators().end(); it++)
 				response += "\t\t- " + getNickname(*it) + "\r\n";
+
+//			std::cout << "No mode" << std::endl;
+//			std::stringstream response;
+
+			//response << ":localhost 324 " << _clients[client_fd].nickname << chan.getName() << ":\r\n";
 			sendToClient(client_fd, response);
 			return true;
 		}
 
 		if (!chan.isMember(client_fd))
 		{
-			std::string response = "442 " + channelOrUser + " MODE :You're not on that channel\r\n";
-			sendToClient(client_fd, response);
+			//std::string response = "442 " + channelOrUser + " MODE :You're not on that channel\r\n";
+
+			std::stringstream response;
+
+			response << ":localhost 442 " << _clients[client_fd].nickname << chan.getName() << " :You're not on that channel\r\n";
+			sendToClient(client_fd, response.str());
 			return false;
 		}
 
@@ -126,35 +135,28 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 								iss >> key;
 							if (!key.empty())
 							{
-								if (chan.getKey().empty())
-								{
-									chan.setKey(key);
-									std::string response = "MODE :Pass added for " + chan.getName() + "\r\n";
-									sendToClient(client_fd, response);
-									continue;
-								}
-								else
-								{
-									chan.setKey(key);
-									std::string response = "MODE :Updated " + chan.getName() + "'s password\r\n";
-									sendToClient(client_fd, response);
-									continue;
-								}
-							}
-							else
-							{
-								std::string response = "MODE :Not enough argument to set the channel's password\r\n";
-								sendToClient(client_fd, response);
-								continue;
+								chan.setKey(key);
+								std::stringstream response;
+								response << ":" << _clients[client_fd].nickname
+										<< " MODE " << chan.getName()
+										<< " +t"
+										<< ""
+										<< "\r\n";
+								broadcastToChannel(chan.getName(), response.str());
 							}
 						}
 						else
 						{
 							chan.setKey("");
-							std::string response = "MODE :The pass for " + chan.getName() + " has been removed\r\n";
-							sendToClient(client_fd, response);
-							continue;
+							std::stringstream response;
+							response << ":" << _clients[client_fd].nickname
+									<< " MODE " << chan.getName()
+									<< " -t"
+									<< ""
+									<< "\r\n";
+							broadcastToChannel(chan.getName(), response.str());
 						}
+						continue;
 					}
 					case 'l':
 					{

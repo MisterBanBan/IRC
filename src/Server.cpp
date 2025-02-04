@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 17:20:28 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/04 11:07:47 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,10 +225,10 @@ void Server::clientData(int client_fd)
 
 	size_t pos;
 
-	while ((pos = _clients[client_fd].buffer_in.find("\r\n")) != std::string::npos)
+	while ((pos = _clients[client_fd].buffer_in.find("\n")) != std::string::npos)
 	{
 		std::string command = _clients[client_fd].buffer_in.substr(0, pos);
-		_clients[client_fd].buffer_in.erase(0, pos + 2);
+		_clients[client_fd].buffer_in.erase(0, pos + 1);
 
         std::cout << "Command received : " << command << std::endl;
 
@@ -501,7 +501,7 @@ void Server::authenticate(int client_fd) {
 	Client *client;
 
 	client = &_clients[client_fd];
-	if (client->right_pass && !client->user.empty())
+	if (client->right_pass && !client->user.empty() && !client->nickname.empty())
 	{
 		client->is_authenticated = true;
 		sendToClient(client_fd, ":server 001 " + _clients[client_fd].nickname + " :Welcome!\r\n");

@@ -23,7 +23,7 @@ bool Server::who(std::istringstream &iss, int client_fd)
             response += getNickname(*it) + " ";
         response += "\r\n";
         sendToClient(client_fd, response);
-        std::string response = "315 " + target + " :End of WHO list\r\n";
+        response = "315 " + target + " :End of WHO list\r\n";
         sendToClient(client_fd, response);
         return true;
     }
