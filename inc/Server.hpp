@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 17:19:36 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/04 16:54:33 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ class Server
         bool    who(std::istringstream &iss, int client_fd);
         bool    quit(std::istringstream &iss, int client_fd);
         void    processBotMessage(int client_fd, const std::string &msg);
-        
+        void    stop();
         std::vector<std::string> split(const std::string &s, char delimiter)
         {
             std::vector<std::string> tokens;
@@ -80,6 +80,7 @@ class Server
         ~Server(void);
         Server &operator=(const Server &other);
     private:
+        bool _running;
         int _server_fd;
         std::vector<struct pollfd> _poll_fds;
         std::map<std::string, Channel> _channels;

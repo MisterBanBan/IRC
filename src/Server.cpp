@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/04 11:07:47 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/04 16:48:39 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,18 @@
 #include <arpa/inet.h>
 #include <sstream>
 
-Server::Server(void) { }
+Server::Server(void) : _running(true) { }
 
 Server::Server(const Server &other)
 {
     *this = other;
 }
+
+void Server::stop()
+{
+    _running = false;
+}
+
 
 int	Server::initServerSocket(const std::string & port, const std::string & pass)
 {
@@ -158,10 +164,11 @@ void Server::acceptNewClient()
 
 }
 
+
 void Server::run()
 {
     std::cout << "Server is running" << std::endl;
-    while (true)
+    while (_running)
     {
         //The poll() function monitors a set of file descriptors for events
         //_poll_fds.data() to the first element of the _poll_fds vector, which contains the pollfd structures describing the file descriptors to monitor
