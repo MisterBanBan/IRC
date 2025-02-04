@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 {
     if (argc != 3)
     {
-        std::cout << "Usage: ./ircserv <6667> <PASSWORD>\n" << std::endl;
+        std::cout << "Usage: ./ircserv <6667> <PASSWORD>" << std::endl;
         return 1;
     }
     std::string port = argv[1];
