@@ -12,10 +12,13 @@
 
 #include "Channel.hpp"
 
-Channel::Channel(void) { }
+Channel::Channel(void) {
+	std::cout << "Constructor" << std::endl;
+}
 
 Channel::Channel(const std::string &channelName) : _name(channelName), _inviteOnly(false), _topicLocked(false), _hasKey(false), _limitUser(false), _userLimit(0)
 {
+	std::cout << "Constructor name" << std::endl;
 }
 
 Channel::Channel(const Channel &other)
@@ -32,6 +35,11 @@ Channel &Channel::operator=(const Channel &other)
         this->_name = other._name;
         this->_members = other._members;
         this->_topics = other._topics;
+		this->_inviteOnly = false;
+		this->_topicLocked = false;
+		this->_hasKey = false;
+		this->_limitUser = false;
+		this->_userLimit = 0;
     }
     return *this;
 }
