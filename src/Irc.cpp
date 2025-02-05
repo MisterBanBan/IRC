@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/28 15:14:33 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/04 17:34:42 by afavier          ###   ########.fr       */
+/*   Updated: 2025/02/05 09:57:56 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,12 +19,15 @@ Server *globalServer = NULL;
 
 void signal_handler(int signum, siginfo_t *info, void *context)
 {
-  (void)info;
-  (void)context;
+	(void)info;
+	(void)context;
 
-  std::cout << "\nSignal " << signum << " Server is done !" << std::endl;
-  if (globalServer)
-    globalServer->stop();
+	if (signum == 2)
+	{
+		if (globalServer)
+			globalServer->stop();
+		std::cout << "\nServer is closed" << std::endl;
+	}
 }
 
 int main(int argc, char **argv)
