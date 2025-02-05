@@ -21,15 +21,13 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		std::string response = "JOIN: You need to be authenticated to do that\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTREGISTERED);
 		return false;
 	}
 
 	if(channel_name.empty() || target_nick.empty())
 	{
-		std::string response = "KICK :Not enough parameters\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS("KICK"));
 		return false;
 	}
 	std::getline(iss, reason);
@@ -42,45 +40,35 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 		reason = "No reason";
 	if (_channels.find(channel_name) == _channels.end())
 	{
-		std::string response = "403 " + channel_name + "KICK :No such channel\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOSUCHCHANNEL(channel_name));
 		return false;
 	}
 	if (!_channels[channel_name].isOperator(client_fd))
 	{
-		std::string response = "482 " + channel_name + "KICK :You're not channel operator\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(channel_name));
 		return false;
 	}
 	int target_fd = getFdByNickname(target_nick);
 	if (target_fd < 0)
 	{
-		sendToClient(client_fd, "KICK :No such nickname\r\n");
+		sendToClient(client_fd, ERR_NOSUCHNICK(target_nick));
 		return false;
 	}
 	if (!_channels[channel_name].isMember(target_fd))
 	{
-		std::string response = "441 " + channel_name + "KICK :They aren't on that channel\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_USERNOTINCHANNEL(target_nick, channel_name));
 		return false;
 	}
 	if (!_channels[channel_name].isMember(client_fd))
 	{
-		std::string response = "441 " + channel_name + "KICK :You're not on that channel\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTONCHANNEL(channel_name));
 		return false;
 	}
 	_channels[channel_name].removeMember(target_fd);
 	_clients[target_fd].getChannels().erase(channel_name);
 	std::string kicker_nick = _clients[client_fd].getNickname();
-	std::stringstream msg;
-	msg << ":" << kicker_nick
-		<< " KICK " << channel_name
-		<< " "     << target_nick
-		<< " :"    << reason
-		<< "\r\n";
-	broadcastToChannel(channel_name, msg.str(), -1);
-	sendToClient(target_fd, msg.str());
+	broadcastToChannel(channel_name, KICK(kicker_nick, channel_name, target_nick, reason), -1);
+	sendToClient(target_fd, KICK(kicker_nick, channel_name, target_nick, reason));
 	if (_channels[channel_name].getMembers().empty())
 		_channels.erase(channel_name);
 	return true;

@@ -18,17 +18,15 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 	iss >> nickname;
 	if (nickname.empty())
 	{
-		std::string response = "431 :No nickname given\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NONICKNAMEGIVEN);
 		return true;
 	}
 	int target_fd = getFdByNickname(nickname);
 	if (target_fd > 0)
 	{
-		std::string response = "433 NICK :Nickname is already in use\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NICKNAMEINUSE(nickname));
 		if (!_clients[client_fd].isAuthenticated())
-			removeClient(client_fd);
+			authenticate(client_fd);
 		return true;
 	}
 	_clients[client_fd].setNickname(nickname);

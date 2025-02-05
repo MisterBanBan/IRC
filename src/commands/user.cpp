@@ -18,16 +18,15 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 	iss >> user;
 	if (user.empty())
 	{
-		std::string response = "461 USER :Not enough parameters\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS("USER"));
 		return true;
 	}
 	if (_clients[client_fd].isAuthenticated() || !_clients[client_fd].getUsername().empty())
 	{
-		std::string response = "462 USER :You may not reregister\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_ALREADYREGISTERED);
 		return false;
 	}
+
 	std::getline(iss, realname);
 	if (!realname.empty())
 	{

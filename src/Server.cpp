@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/04 16:48:39 by afavier          ###   ########.fr       */
+/*   Updated: 2025/02/05 17:45:57 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -235,15 +235,20 @@ void Server::clientData(int client_fd)
 		std::string command = _clients[client_fd].getBufferIn().substr(0, pos);
 		_clients[client_fd].getBufferIn().erase(0, pos + 1);
 
+		if (command.empty())
+			continue;
+
         std::cout << "Command received : " << command << std::endl;
+
+		if (command.at(command.size() - 1) == 13)
+			command.erase(command.size() - 1);
 
         std::istringstream iss(command);
         std::string cmd;
         iss >> cmd;
-        // regarder si luser a un # dans sont nom
+
         if (cmd == "NICK")
         {
-            //rajouter le pass
 			if (nick(iss, client_fd))
 				continue;
 			return;
@@ -320,12 +325,8 @@ void Server::clientData(int client_fd)
                 continue;
             return;
         }
-
         else
-        {
-            std::string response = "421 " + cmd + " :Unknown command\r\n";
-            sendToClient(client_fd, response);
-        }
+            sendToClient(client_fd, ERR_UNKNOWNCOMMAND(cmd));
     }
 }
 
@@ -504,21 +505,20 @@ Server &Server::operator=(const Server &other)
 }
 
 void Server::authenticate(int client_fd) {
-	Client *client;
+	Client &client = _clients[client_fd];
 
-	client = &_clients[client_fd];
-	if (client->getRightPass() && !client->getUsername().empty() && !client->getNickname().empty())
+	if (client.getRightPass() && !client.getUsername().empty() && !client.getNickname().empty())
 	{
-		client->setAuthenticated(true);
-		sendToClient(client_fd, ":server 001 " + _clients[client_fd].getNickname() + " :Welcome!\r\n");
+		client.setAuthenticated(true);
+		sendToClient(client_fd, RPL_WELCOME(client.getNickname()));
 	}
 	else
 	{
-		if (!client->getRightPass())
+		if (!client.getRightPass())
 			sendToClient(client_fd, "Need a password to be fully authenticated (/PASS <password>)\r\n");
-		if (client->getUsername().empty())
+		if (client.getUsername().empty())
 			sendToClient(client_fd, "Need an username to be fully authenticated (/USER <username> 0 * <realname>)\r\n");
-		if (client->getNickname().empty())
+		if (client.getNickname().empty())
 			sendToClient(client_fd, "Need a nickname to be fully authenticated (/NICK <nickname>)\r\n");
 	}
 }

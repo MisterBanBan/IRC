@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:18 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 15:23:47 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/05 11:29:34 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,15 +18,13 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		std::string response = "JOIN: You need to be authenticated to do that\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTREGISTERED);
 		return false;
 	}
 
 	if (channelOrUser.empty())
 	{
-		std::string response = "461 MODE :Not enough parameters\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS("MODE"));
 		return true;
 	}
 
@@ -34,8 +32,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 	{
 		if (_channels.find(channelOrUser) == _channels.end())
 		{
-			std::string response = "403 " + channelOrUser + " MODE :No such channel\r\n";
-			sendToClient(client_fd, response);
+			sendToClient(client_fd, ERR_NOSUCHCHANNEL(channelOrUser));
 			return true;
 		}
 		Channel &chan = _channels[channelOrUser];
@@ -81,19 +78,13 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 
 		if (!chan.isMember(client_fd))
 		{
-			//std::string response = "442 " + channelOrUser + " MODE :You're not on that channel\r\n";
-
-			std::stringstream response;
-
-			response << ":localhost 442 " << _clients[client_fd].getNickname() << chan.getName() << " :You're not on that channel\r\n";
-			sendToClient(client_fd, response.str());
+			sendToClient(client_fd, ERR_NOTONCHANNEL(chan.getName()));
 			return false;
 		}
 
 		if (!chan.isOperator(client_fd))
 		{
-			std::string response = "482 " + channelOrUser + " MODE :You're not channel operator\r\n";
-			sendToClient(client_fd, response);
+			sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(chan.getName()));
 			return false;
 		}
 
@@ -103,29 +94,34 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 		{
 			for (size_t i = 0; i < modes.size(); i++)
 			{
-				if (i == 0)
+				if (modes[i] == '-')
+					add = false;
+				if (modes[i] == '+')
+					add = true;
+				if (modes[i] != '+' && modes[i] != '-' && i == 0)
 				{
-					if (modes[i] == '-')
-						add = false;
-					if (modes[i] == '+')
-						add = true;
-					if (modes[i] == '+' || modes[i] == '-')
-						continue;
-					else
-					{
-						std::string response = "MODE :Flags must start with '-' or '+'\r\n";
-						sendToClient(client_fd, response);
-						break;
-					}
+					sendToClient(client_fd, ERR_INVALIDMODEPARAM(chan.getName(), modes[i], "Modes needs to start with - or +"));
+					break;
 				}
+				if (modes[i] == '+' || modes[i] == '-')
+					continue;
+
 				switch(modes[i])
 				{
 					case 'i':
 						chan.setInviteOnly(add);
-						continue;
+						if (add)
+							broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "+i", ""), -1);
+						else
+							broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "-i", ""), -1);
+						break;
 					case 't':
 						chan.setTopicLocked(add);
-						continue;
+						if (add)
+							broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "+t", ""), -1);
+						else
+							broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "-t", ""), -1);
+						break;
 					case 'k':
 					{
 						if (add)
@@ -136,27 +132,18 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 							if (!key.empty())
 							{
 								chan.setKey(key);
-								std::stringstream response;
-								response << ":" << _clients[client_fd].getNickname()
-										<< " MODE " << chan.getName()
-										<< " +t"
-										<< ""
-										<< "\r\n";
-								broadcastToChannel(chan.getName(), response.str(), -1);
+								broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "+k", "<secret>"), client_fd);
+								sendToClient(client_fd, MODE(_clients[client_fd].getNickname(), chan.getName(), "+k", key));
 							}
+							else
+								sendToClient(client_fd, ERR_NEEDMOREPARAMS("MODE +k"));
 						}
 						else
 						{
 							chan.setKey("");
-							std::stringstream response;
-							response << ":" << _clients[client_fd].getNickname()
-									<< " MODE " << chan.getName()
-									<< " -t"
-									<< ""
-									<< "\r\n";
-							broadcastToChannel(chan.getName(), response.str(), -1);
+							broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "-k", ""), -1);
 						}
-						continue;
+						break;
 					}
 					case 'l':
 					{
@@ -171,40 +158,24 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 								int nb = strtol(nbUser.c_str(), &end, 10);
 								if (nb <= 0 || *end != '\0')
 								{
-									std::string response = "MODE :Enter a number or a number greater than 0\r\n";
-									sendToClient(client_fd, response);
-									continue;
+									sendToClient(client_fd, ERR_INVALIDMODEPARAM(chan.getName(), "+l", "Needs to be a number and greater than 0"));
+									break;
 								}
-								if (nb < getNbUser(client_fd, channelOrUser))
-								{
-									std::string response = "MODE :There are more users in the channel " + chan.getName() + " than the limit you are try to set. Please consider deleting users before setting the limit\r\n";
-									sendToClient(client_fd, response);
-									continue;
-								}
-								else
-								{
-									chan.setLimitUser(add);
-									chan.setUserLimit(nb);
-									std::string response = "MODE :Limit of users set for the channel " + chan.getName() + "\r\n";
-									sendToClient(client_fd, response);
-									continue;
-								}
+								chan.setLimitUser(add);
+								chan.setUserLimit(nb);
+								broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "+l",
+																			to_string(nb)), -1);
 							}
 							else
-							{
-								std::string response = "MODE :Not enough argument to set the channel's limit\r\n";
-								sendToClient(client_fd, response);
-								continue;
-							}
+								sendToClient(client_fd, ERR_NEEDMOREPARAMS("MODE +l"));
 						}
 						else
 						{
 							chan.setLimitUser(add);
 							chan.setUserLimit(0);
-							std::string response = "MODE :Removed channel's users limit\r\n";
-							sendToClient(client_fd, response);
-							continue;
+							broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "-l", ""), -1);
 						}
+						break;
 					}
 					case 'o':
 					{
@@ -213,48 +184,43 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 							iss >> opUser;
 						if (opUser.empty())
 						{
-							std::string response = "MODE :Not enough argument to set/remove an user's channel operator privilege\r\n";
-							sendToClient(client_fd, response);
-							continue;
+							sendToClient(client_fd, ERR_NEEDMOREPARAMS("MODE +o"));
+							break;
 						}
 						int fd = getFdByNickname(opUser);
 						if (fd < 0)
 						{
-							std::string response = "401 " + opUser + " :No such nick\r\n";
-							sendToClient(client_fd, response);
-							continue;
+							sendToClient(client_fd, ERR_NOSUCHNICK(opUser));
+							break;
 						}
 						if (!chan.isMember(fd))
 						{
-							std::string response = "441 " + opUser + " :They aren't on that channel\r\n";
-							sendToClient(client_fd, response);
-							continue;
+							sendToClient(client_fd, ERR_USERNOTINCHANNEL(opUser, chan.getName()));
+							break;
 						}
 						if (add)
 						{
 							chan.getOperators().insert(fd);
-							std::string response = "MODE :Added " + opUser + " as an channel operator for " + chan.getName() + "\r\n";
-							sendToClient(client_fd, response);
+							sendToClient(client_fd, MODE(_clients[client_fd].getNickname(), chan.getName(), "+o", opUser));
 						}
 						else
 						{
 							chan.getOperators().erase(fd);
-							std::string response = "MODE :Removed channel operator " + opUser + " from " + chan.getName() + "\r\n";
-							sendToClient(client_fd, response);
+							sendToClient(client_fd, MODE(_clients[client_fd].getNickname(), chan.getName(), "-o", opUser));
 						}
-						continue;
+						break;
 					}
 					default:
 					{
-						std::string response = "501 :Unknown MODE flag\r\n";
-						sendToClient(client_fd, response);
-						continue;
+						sendToClient(client_fd, ERR_UMODEUNKNOWNFLAG(to_string(modes[i])));
+						break;
 					}
 				}
 			}
+
+			iss >> modes;
 			if(iss.eof())
 				break ;
-			iss >> modes;
 		}
 	}
 

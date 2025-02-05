@@ -18,15 +18,13 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		std::string response = "JOIN: You need to be authenticated to do that\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_ALREADYREGISTERED);
 		return false;
 	}
 
 	if (target.empty())
 	{
-		std::string response = "411 PRIVMSG :No recipient given\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NORECIPIENT);
 		return false;
 	}
 
@@ -48,17 +46,16 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 	{
 		if (_channels.find(target) == _channels.end())
 		{
-			std::string response = "403 " + target + "PRIVMSG :No such channel\r\n";
-			sendToClient(client_fd, response);
+			sendToClient(client_fd, ERR_NOSUCHCHANNEL(target));
 			return true;
 		}
-		if (_channels[target].getHasKey())
+
+		if (!_channels[target].isMember(client_fd))
 		{
-			//peut etre dautre chose a rajouter
-			std::string response = "404 " + target + "PRIVMSG :Cannot send to channel\r\n";
-			sendToClient(client_fd, response);
+			sendToClient(client_fd, ERR_NOTONCHANNEL(target));
 			return true;
 		}
+
 		std::string msg;
 		std::getline(iss, msg);
 		while (!msg.empty() && (msg[0] == ' ' || msg[0] == ':'))
@@ -67,8 +64,7 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 			{
 				if (msg.empty())
 				{
-					std::string response = "412 PRIVMSG :No text to send\r\n";
-					sendToClient(client_fd, response);
+					sendToClient(client_fd, ERR_NOTEXTTOSEND);
 					return true;
 				}
 				std::stringstream response;
@@ -78,15 +74,13 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 			}
 			msg.erase(0, 1);
 		}
-		std::string response = "412 PRIVMSG :No text to send\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTEXTTOSEND);
 		return true;
 	}
 	int targetFd = getFdByNickname(target);
 	if (targetFd < 0)
 	{
-		std::string response = "401 PRIVMSG :No such nick\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOSUCHNICK(target));
 		return true;
 	}
 	std::string msg;
@@ -98,8 +92,7 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 			msg.erase(0, 1);
 			if (msg.empty())
 			{
-				std::string response = "412 PRIVMSG :No text to send\r\n";
-				sendToClient(client_fd, response);
+				sendToClient(client_fd, ERR_NOTEXTTOSEND);
 				return true;
 			}
 			sendPrivateMessage(client_fd, target, msg);
@@ -107,7 +100,6 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 		}
 		msg.erase(0, 1);
 	}
-	std::string response = "412 PRIVMSG :No text to send\r\n";
-	sendToClient(client_fd, response);
+	sendToClient(client_fd, ERR_NOTEXTTOSEND);
 	return true;
 }

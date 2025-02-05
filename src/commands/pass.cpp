@@ -17,8 +17,7 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 	iss >> pass;
 	if (pass.empty())
 	{
-		std::string response = "461 PASS :Not enough parameters\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS("PASS"));
 		return true;
 	}
 	if (_clients[client_fd].isAuthenticated() || _clients[client_fd].getRightPass())
@@ -28,8 +27,7 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 	}
 	if (!isCorrectPasswordServer(pass))
 	{
-		std::string response = "464 PASS :Password incorrect\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_PASSWDMISMATCH);
 		removeClient(client_fd);
 		return false;
 	}

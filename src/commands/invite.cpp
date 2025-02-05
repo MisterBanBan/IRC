@@ -20,49 +20,41 @@ bool Server::invite(std::istringstream &iss, int client_fd)
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		std::string response = "JOIN: You need to be authenticated to do that\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTREGISTERED);
 		return false;
 	}
 	if (nickname.empty() || channelName.empty())
 	{
-		std::string response = "461 INVITE :Not enough parameters\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS("INVITE"));
 		return true;
 	}
 	if (_channels.find(channelName) == _channels.end())
 	{
-		std::string response = "403 " + channelName + "INVITE :No such channel\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return true;
 	}
 	if(!_channels[channelName].isMember(client_fd))
 	{
-		std::string response = "442 " + channelName + "INVITE :You're not on that channel\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTONCHANNEL(channelName));
 		return true;
 	}
 	int target = getFdByNickname(nickname);
 	if (_channels[channelName].isMember(target))
 	{
-		std::string response = "443 " + channelName + "INVITE :is already on channel\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_USERONCHANNEL(nickname, channelName));
 		return true;
 	}
 	if (_channels[channelName].getInviteOnly() && !_channels[channelName].isOperator(client_fd))
 	{
-		std::string response = "482 " + channelName + "INVITE :you're not channel operator\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(channelName));
 		return true;
 	}
 	if (target < 0)
 	{
-		std::string response = "401 " + channelName + "INVITE :No such nick\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOSUCHNICK(channelName));
 		return true;
 	}
-	std::string response = "341 " + getNickname(client_fd) + " " + nickname + " " + channelName + "\r\n";
-	sendToClient(client_fd, response);
+	sendToClient(client_fd, RPL_INVITING(nickname, channelName));
 	std::string notice = ":" + getNickname(client_fd) + " INVITE " + nickname + " :" + channelName + "\r\n";
 	sendToClient(target, notice);
 	return true;

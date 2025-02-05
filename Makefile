@@ -3,7 +3,6 @@ NAME := IRC
 SRC_DIR := src
 CMDS_DIR := $(SRC_DIR)/commands
 BUILD_DIR := .build
-DEPS_DIR := .deps
 INC_DIR := inc
 
 # Liste des fichiers sources
@@ -28,7 +27,7 @@ SRC := $(SRC_DIR)/Irc.cpp \
 
 # Génération des fichiers objets et des dépendances
 OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC))
-DEPS := $(patsubst $(BUILD_DIR)/%.o, $(DEPS_DIR)/%.d, $(OBJS))
+DEPS := $(patsubst $(BUILD_DIR)/%.o, $(BUILD_DIR)/%.d, $(OBJS))
 
 # Compilateur et flags
 CC := c++
@@ -55,7 +54,7 @@ $(NAME): $(OBJS)
 
 # Cible de nettoyage
 clean:
-	$(RM) -r $(BUILD_DIR) $(DEPS_DIR)
+	$(RM) -r $(BUILD_DIR)
 
 # Cible de nettoyage complet
 fclean: clean

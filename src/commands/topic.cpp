@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:59 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:30:37 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/05 15:43:18 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,37 +19,46 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		std::string response = "JOIN: You need to be authenticated to do that\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTREGISTERED);
 		return false;
 	}
 
 	if (name_channel.empty())
 	{
-		std::string response = "461 TOPIC :Not enough parameters\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS("TOPIC"));
 		return true;
 	}
 	if (_channels.find(name_channel) == _channels.end())
 	{
-		std::string response = "403 " + name_channel + "TOPIC :No such channel\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOSUCHCHANNEL(name_channel));
 		return true;
 	}
 	if (!_channels[name_channel].isMember(client_fd))
 	{
-		std::string response = "442 " + name_channel + "TOPIC :You're not on that channel\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTONCHANNEL(name_channel));
 		return true;
 	}
 	if (_channels[name_channel].getTopicLocked() && !_channels[name_channel].isOperator(client_fd))
 	{
-		std::string response = "482 " + name_channel + "TOPIC :You're not channel operator\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(name_channel));
 		return true;
 	}
 	std::string topic;
+
 	std::getline(iss, topic);
+	if (topic.empty())
+	{
+		std::string actualTopic = _channels[name_channel].getTopic();
+		if (actualTopic.empty())
+			sendToClient(client_fd, RPL_NOTOPIC(name_channel));
+		else
+		{
+			std::cout << RPL_TOPIC(name_channel, actualTopic) << std::endl;
+			sendToClient(client_fd, RPL_TOPIC(name_channel, actualTopic));
+		}
+		return true;
+	}
+
 	while (!topic.empty() && (topic[0] == ' ' || topic[0] == ':'))
 	{
 		if (topic[0] == ':')
@@ -57,31 +66,21 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 			topic.erase(0, 1);
 			if (topic.empty())
 			{
-				std::string top = _channels[name_channel].getTopic();
-				if (top.empty())
-				{
-					std::string response = "331 " + name_channel + "TOPIC :No topic is set\r\n";
-					sendToClient(client_fd, response);
-					return true;
-				}
+				std::string actualTopic = _channels[name_channel].getTopic();
+				if (actualTopic.empty())
+					sendToClient(client_fd, RPL_NOTOPIC(name_channel));
 				else
-				{
-					std::string response = "331 " + name_channel + " :" + top + "\r\n";
-					sendToClient(client_fd, response);
-					return true;
-				}
+					sendToClient(client_fd, RPL_TOPIC(name_channel, actualTopic));
+				return true;
 			}
 			else
 			{
 				_channels[name_channel].setTopic(topic);
-				std::string msg = ":" + getNickname(client_fd) + " TOPIC " + name_channel + " :" + topic + "\r\n";
-				broadcastToChannel(name_channel, msg, -1);
+				broadcastToChannel(name_channel, TOPIC(getNickname(client_fd), name_channel, topic), -1);
 				return true;
 			}
 		}
 		topic.erase(0, 1);
 	}
-	std::string response = "Error :The order is TOPIC #channel :topic\r\n";
-	sendToClient(client_fd, response);
 	return true;
 }

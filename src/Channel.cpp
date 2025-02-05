@@ -13,12 +13,10 @@
 #include "Channel.hpp"
 
 Channel::Channel(void) {
-	std::cout << "Constructor" << std::endl;
 }
 
 Channel::Channel(const std::string &channelName) : _name(channelName), _inviteOnly(false), _topicLocked(false), _hasKey(false), _limitUser(false), _userLimit(0)
 {
-	std::cout << "Constructor name" << std::endl;
 }
 
 Channel::Channel(const Channel &other)

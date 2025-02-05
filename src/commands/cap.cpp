@@ -33,6 +33,8 @@ bool Server::cap(std::istringstream &iss, int client_fd)
     {
         return true;
     }
-    sendToClient(client_fd, "421 CAP :Unknown subcommand\r\n");
+	std::stringstream ss;
+	ss << "CAP " << command;
+    sendToClient(client_fd, ERR_UNKNOWNCOMMAND(ss.str()));
     return false;
 }

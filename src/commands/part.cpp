@@ -19,15 +19,13 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		std::string response = "JOIN: You need to be authenticated to do that\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NOTREGISTERED);
 		return false;
 	}
 
 	if(channel_str.empty())
 	{
-		std::string response = "461 PART :Not enough parameters\r\n";
-		sendToClient(client_fd, response);
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS("PART"));
 		return false;
 	}
 	std::getline(iss, reason);
@@ -44,23 +42,15 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 		std::string channel_name = channels[i];
 		if (_channels.find(channel_name) == _channels.end())
 		{
-			std::string response = "403 " + channel_name + " PART: No such channel\r\n";
-			sendToClient(client_fd, response);
+			sendToClient(client_fd, ERR_NOSUCHCHANNEL(channel_name));
 			return false;
 		}
 		if (!_channels[channel_name].isMember(client_fd))
 		{
-			sendToClient(client_fd, "442 " + channel_name + " PART: You're not on that channel\r\n");
+			sendToClient(client_fd, ERR_NOTONCHANNEL(channel_name));
 			return false;
 		}
-		std::string part_nick = _clients[client_fd].getNickname();
-		std::stringstream msg;
-		msg << ":" << part_nick
-			<< " PART " << channel_name
-			<< " "     << part_nick
-			<< " :"    << reason
-			<< "\r\n";
-		broadcastToChannel(channel_name, msg.str(), -1);
+		broadcastToChannel(channel_name, PART(_clients[client_fd].getNickname(), channel_name, reason), -1);
 		_channels[channel_name].removeMember(client_fd);
 		_clients[client_fd].getChannels().erase(channel_name);
 		if (_channels[channel_name].getMembers().empty())

@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/04 16:54:33 by afavier          ###   ########.fr       */
+/*   Updated: 2025/02/05 11:15:28 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include <unistd.h> //close
 #include "Client.hpp"
 #include "Channel.hpp"
+#include "replies.hpp"
 #include <sstream> //istringstream
 #include <cstdlib> //atoi
 #include <cstring> //memset
