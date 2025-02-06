@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   part.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:36 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:30:37 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/06 16:02:42 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 			return false;
 		}
 		broadcastToChannel(channel_name, PART(_clients[client_fd].getNickname(), channel_name, reason), -1);
+		
 		_channels[channel_name].removeMember(client_fd);
 		_clients[client_fd].getChannels().erase(channel_name);
 		if (_channels[channel_name].getMembers().empty())

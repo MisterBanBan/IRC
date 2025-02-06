@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   nick.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:43 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:05:40 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/06 15:49:06 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,16 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 	{
 		sendToClient(client_fd, ERR_NONICKNAMEGIVEN);
 		return true;
+	}
+	if (nickname[0] == '#' || nickname[0] == ':' || isdigit(nickname[0]))
+	{
+		sendToClient(client_fd, ERR_NONICKNAMEGIVEN);
+		return false;
+	}
+	if (nickname.find(" ") != std::string::npos)
+	{
+		sendToClient(client_fd, ERR_NONICKNAMEGIVEN);
+		return false;
 	}
 	int target_fd = getFdByNickname(nickname);
 	if (target_fd > 0)

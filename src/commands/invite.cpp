@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   invite.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:09 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:30:37 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/06 18:02:09 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ bool Server::invite(std::istringstream &iss, int client_fd)
 		sendToClient(client_fd, ERR_NOSUCHNICK(channelName));
 		return true;
 	}
+	_channels[channelName].inviteUser(target);
 	sendToClient(client_fd, RPL_INVITING(nickname, channelName));
 	std::string notice = ":" + getNickname(client_fd) + " INVITE " + nickname + " :" + channelName + "\r\n";
 	sendToClient(target, notice);
