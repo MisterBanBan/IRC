@@ -123,7 +123,7 @@ bool Channel::isInviteOnly() const {
 	return _inviteOnly;
 }
 
-bool Channel::hasLimitUser() const {
+bool Channel::hasUserLimit() const {
 	if (_userLimit > 0)
 		return true;
 	return false;

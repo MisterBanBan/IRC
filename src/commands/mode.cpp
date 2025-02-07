@@ -55,7 +55,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 			else
 				response += "false\r\n";
 			response += "- Users limit: ";
-			if (chan.hasLimitUser())
+			if (chan.hasUserLimit())
 			{
 				std::stringstream ss;
 				ss << chan.getUserLimit();

@@ -43,7 +43,7 @@ class Channel
 		bool hasKey() const;
 		bool isTopicLocked() const;
 		bool isInviteOnly() const;
-		bool hasLimitUser() const;
+		bool hasUserLimit() const;
 		bool isValidKey(const std::string & key) const;
 
 		void setTopicLocked(bool active);

@@ -53,7 +53,7 @@ bool Server::join(std::istringstream &iss, int client_fd)
 		}
 		else
 		{
-			if (_channels[channel_name].hasLimitUser() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
+			if (_channels[channel_name].hasUserLimit() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
 			{
 				sendToClient(client_fd, ERR_CHANNELISFULL(getNickname(client_fd), channel_name));
 				return true;
