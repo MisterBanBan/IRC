@@ -43,6 +43,8 @@ class Server
         void	removeClient(int client_fd);
         int		getFdByNickname(const std::string & target);
         std::string getNickname(int clientFd) const;
+		std::string getUsername(int clientFd) const;
+		std::string getRealname(int clientFd) const;
         void	broadcastToChannel(const std::string &channel_name, const std::string &message, int to_ignore);
         void	sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
         bool	isCorrectPasswordServer(const std::string &pass);

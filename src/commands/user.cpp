@@ -18,12 +18,12 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 	iss >> user;
 	if (user.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("USER"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "USER"));
 		return true;
 	}
 	if (_clients[client_fd].isAuthenticated() || !_clients[client_fd].getUsername().empty())
 	{
-		sendToClient(client_fd, ERR_ALREADYREGISTERED);
+		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 

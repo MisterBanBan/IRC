@@ -19,13 +19,13 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		sendToClient(client_fd, ERR_NOTREGISTERED);
+		sendToClient(client_fd, ERR_NOTREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 
 	if(channel_str.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("PART"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "PART"));
 		return false;
 	}
 	std::getline(iss, reason);
@@ -42,12 +42,12 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 		std::string channel_name = channels[i];
 		if (_channels.find(channel_name) == _channels.end())
 		{
-			sendToClient(client_fd, ERR_NOSUCHCHANNEL(channel_name));
+			sendToClient(client_fd, ERR_NOSUCHCHANNEL(getNickname(client_fd), channel_name));
 			return false;
 		}
 		if (!_channels[channel_name].isMember(client_fd))
 		{
-			sendToClient(client_fd, ERR_NOTONCHANNEL(channel_name));
+			sendToClient(client_fd, ERR_NOTONCHANNEL(getNickname(client_fd), channel_name));
 			return false;
 		}
 		broadcastToChannel(channel_name, PART(_clients[client_fd].getNickname(), channel_name, reason), -1);

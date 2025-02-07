@@ -21,13 +21,13 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		sendToClient(client_fd, ERR_NOTREGISTERED);
+		sendToClient(client_fd, ERR_NOTREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 
 	if(channel_name.empty() || target_nick.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("KICK"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "KICK"));
 		return false;
 	}
 	std::getline(iss, reason);
@@ -40,28 +40,28 @@ bool Server::kick(std::istringstream &iss, int client_fd) {
 		reason = "No reason";
 	if (_channels.find(channel_name) == _channels.end())
 	{
-		sendToClient(client_fd, ERR_NOSUCHCHANNEL(channel_name));
+		sendToClient(client_fd, ERR_NOSUCHCHANNEL(getNickname(client_fd), channel_name));
 		return false;
 	}
 	if (!_channels[channel_name].isOperator(client_fd))
 	{
-		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(channel_name));
+		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(getNickname(client_fd), channel_name));
 		return false;
 	}
 	int target_fd = getFdByNickname(target_nick);
 	if (target_fd < 0)
 	{
-		sendToClient(client_fd, ERR_NOSUCHNICK(target_nick));
+		sendToClient(client_fd, ERR_NOSUCHNICK(getNickname(client_fd), target_nick));
 		return false;
 	}
 	if (!_channels[channel_name].isMember(target_fd))
 	{
-		sendToClient(client_fd, ERR_USERNOTINCHANNEL(target_nick, channel_name));
+		sendToClient(client_fd, ERR_USERNOTINCHANNEL(getNickname(client_fd), target_nick, channel_name));
 		return false;
 	}
 	if (!_channels[channel_name].isMember(client_fd))
 	{
-		sendToClient(client_fd, ERR_NOTONCHANNEL(channel_name));
+		sendToClient(client_fd, ERR_NOTONCHANNEL(getNickname(client_fd), channel_name));
 		return false;
 	}
 	_channels[channel_name].removeMember(target_fd);

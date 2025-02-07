@@ -20,12 +20,12 @@ bool Server::join(std::istringstream &iss, int client_fd)
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		sendToClient(client_fd, ERR_ALREADYREGISTERED);
+		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 	if (channel_str.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("JOIN"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "JOIN"));
 		return false;
 	}
 	std::vector<std::string> channels = split(channel_str, ',');
@@ -55,7 +55,7 @@ bool Server::join(std::istringstream &iss, int client_fd)
 		{
 			if (_channels[channel_name].hasLimitUser() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
 			{
-				sendToClient(client_fd, ERR_CHANNELISFULL(channel_name));
+				sendToClient(client_fd, ERR_CHANNELISFULL(getNickname(client_fd), channel_name));
 				return true;
 			}
 
@@ -63,7 +63,7 @@ bool Server::join(std::istringstream &iss, int client_fd)
 			{
                 std::string provided_key = (i < keys.size()) ? keys[i] : "";
                 if (!_channels[channel_name].isValidKey(provided_key)) {
-					sendToClient(client_fd, ERR_BADCHANNELKEY(channel_name));
+					sendToClient(client_fd, ERR_BADCHANNELKEY(getNickname(client_fd), channel_name));
                     continue;
                 }
             }
@@ -73,7 +73,7 @@ bool Server::join(std::istringstream &iss, int client_fd)
 			{
                 if (!_channels[channel_name].isInvited(client_fd))
 				{
-                    sendToClient(client_fd, ERR_INVITEONLYCHAN(channel_name));
+                    sendToClient(client_fd, ERR_INVITEONLYCHAN(getNickname(client_fd), channel_name));
                     continue;
                 }
                 _channels[channel_name].addMember(client_fd);
@@ -86,7 +86,7 @@ bool Server::join(std::istringstream &iss, int client_fd)
 
 		sendToClient(client_fd, JOIN(getNickname(client_fd), channel_name));
 		if (!chan.getTopic().empty())
-			sendToClient(client_fd, RPL_TOPIC(channel_name, chan.getTopic()));
+			sendToClient(client_fd, RPL_TOPIC(getNickname(client_fd), channel_name, chan.getTopic()));
 
 		std::stringstream users;
 
@@ -102,7 +102,7 @@ bool Server::join(std::istringstream &iss, int client_fd)
 
 		std::cout << chan.getName() << std::endl;
 		sendToClient(client_fd, RPL_NAMREPLY(getNickname(client_fd), channel_name, users.str()));
-		sendToClient(client_fd, RPL_ENDOFNAMES(channel_name));
+		sendToClient(client_fd, RPL_ENDOFNAMES(getNickname(client_fd), channel_name));
 	}
 	return true;
 }

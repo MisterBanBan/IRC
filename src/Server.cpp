@@ -326,7 +326,7 @@ void Server::clientData(int client_fd)
             return;
         }
         else
-            sendToClient(client_fd, ERR_UNKNOWNCOMMAND(cmd));
+            sendToClient(client_fd, ERR_UNKNOWNCOMMAND(getNickname(client_fd), cmd));
     }
 }
 
@@ -413,6 +413,20 @@ std::string Server::getNickname(int clientFd) const
     if (it == _clients.end())
         return "";
     return it->second.getNickname();
+}
+
+std::string Server::getUsername(int clientFd) const {
+	std::map<int, Client>::const_iterator it = _clients.find(clientFd);
+	if (it == _clients.end())
+		return "";
+	return it->second.getUsername();
+}
+
+std::string Server::getRealname(int clientFd) const {
+	std::map<int, Client>::const_iterator it = _clients.find(clientFd);
+	if (it == _clients.end())
+		return "";
+	return it->second.getRealname();
 }
 
 void Server::sendToClient(int client_fd, const std::string &response)
@@ -515,10 +529,10 @@ void Server::authenticate(int client_fd) {
 	else
 	{
 		if (!client.getRightPass())
-			sendToClient(client_fd, "Need a password to be fully authenticated (/PASS <password>)\r\n");
+			sendToClient(client_fd, "Need a password to be fully authenticated (PASS <password>)\r\n");
 		if (client.getUsername().empty())
-			sendToClient(client_fd, "Need an username to be fully authenticated (/USER <username> 0 * <realname>)\r\n");
+			sendToClient(client_fd, "Need an username to be fully authenticated (USER <username> 0 * <realname>)\r\n");
 		if (client.getNickname().empty())
-			sendToClient(client_fd, "Need a nickname to be fully authenticated (/NICK <nickname>)\r\n");
+			sendToClient(client_fd, "Need a nickname to be fully authenticated (NICK <nickname>)\r\n");
 	}
 }
