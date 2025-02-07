@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/05 17:48:21 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 12:02:49 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,8 @@ bool Server::join(std::istringstream &iss, int client_fd)
 		{
 			if (it != members.begin())
 				users << " ";
+			if (chan.isOperator(*it))
+				users << "@";
 			users << getNickname(*it);
 		}
 

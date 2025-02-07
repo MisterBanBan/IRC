@@ -36,7 +36,11 @@ bool Server::who(std::istringstream &iss, int client_fd)
         }
         std::string response = "352 " + target + " :";
         for (std::set<int>::iterator it = _channels[target].getMembers().begin(); it != _channels[target].getMembers().end(); ++it)
-            response += getNickname(*it) + " ";
+		{
+			if (_channels[target].isOperator(*it))
+				response += "@";
+			response += getNickname(*it) + " ";
+		}
         response += "\r\n";
         sendToClient(client_fd, response);
         response = "315 " + target + " :End of WHO list\r\n";
