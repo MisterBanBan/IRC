@@ -42,13 +42,12 @@ class Channel
 		std::set<int> & getMembers();
 
 		bool hasKey() const;
+		bool hasUserLimit() const;
 		bool isTopicLocked() const;
 		bool isInviteOnly() const;
-		bool hasUserLimit() const;
 		bool isValidKey(const std::string & key) const;
 
 		void setTopicLocked(bool active);
-		void setHasKey(bool active);
 		void setInviteOnly(bool active);
 
 		void setUserLimit(int limit);

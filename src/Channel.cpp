@@ -51,39 +51,19 @@ void Channel::removeMember(int fd)
     _members.erase(fd);
 }
 
+void Channel::inviteUser(int fd)
+{
+	this->_inviteUser.insert(fd);
+}
+
 bool Channel::isMember(int fd) const
 {
     return (_members.find(fd) != _members.end());
 }
 
-std::set<int>& Channel::getMembers()
-{
-    return _members;
-}
-
-std::string Channel::getTopic() const
-{
-    return _topics;
-}
-
-void Channel::setTopic(const std::string &topic)
-{
-    this->_topics = topic;
-}
-
-void Channel::inviteUser(int fd)
-{
-    this->_inviteUser.insert(fd);
-}
-
 bool Channel::isInvited(int fd) const
 {
-    return (_inviteUser.find(fd) != _inviteUser.end());
-}
-
-std::string Channel::getName() const
-{
-	return _name;
+	return (_inviteUser.find(fd) != _inviteUser.end());
 }
 
 bool Channel::isOperator(int fd) const
@@ -93,24 +73,37 @@ bool Channel::isOperator(int fd) const
 	return true;
 }
 
+std::string Channel::getName() const
+{
+	return _name;
+}
+
+std::string Channel::getTopic() const
+{
+	return _topics;
+}
+
 int Channel::getUserLimit() const {
 	return _userLimit;
+}
+
+std::set<int>& Channel::getMembers()
+{
+    return _members;
 }
 
 std::set<int> &Channel::getOperators() {
 	return _operators;
 }
 
-void Channel::setUserLimit(int limit) {
-	_userLimit = limit;
-}
-
-void Channel::setKey(const std::string & key) {
-	_hashKey = crypt(key.c_str(), "$6$RNEuivJ08k");
-}
-
 bool Channel::hasKey() const {
 	if (!_hashKey.empty())
+		return true;
+	return false;
+}
+
+bool Channel::hasUserLimit() const {
+	if (_userLimit > 0)
 		return true;
 	return false;
 }
@@ -121,12 +114,6 @@ bool Channel::isTopicLocked() const {
 
 bool Channel::isInviteOnly() const {
 	return _inviteOnly;
-}
-
-bool Channel::hasUserLimit() const {
-	if (_userLimit > 0)
-		return true;
-	return false;
 }
 
 bool Channel::isValidKey(const std::string &key) const {
@@ -143,4 +130,17 @@ void Channel::setTopicLocked(bool active) {
 
 void Channel::setInviteOnly(bool active) {
 	_inviteOnly = active;
+}
+
+void Channel::setUserLimit(int limit) {
+	_userLimit = limit;
+}
+
+void Channel::setKey(const std::string & key) {
+	_hashKey = crypt(key.c_str(), "$6$RNEuivJ08k");
+}
+
+void Channel::setTopic(const std::string &topic)
+{
+    this->_topics = topic;
 }
