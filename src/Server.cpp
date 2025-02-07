@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 11:27:32 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 17:22:42 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -531,7 +531,7 @@ void Server::authenticate(int client_fd) {
 		if (!client.getRightPass())
 			sendToClient(client_fd, "Need a password to be fully authenticated (PASS <password>)\r\n");
 		if (client.getUsername().empty())
-			sendToClient(client_fd, "Need an username to be fully authenticated (USER <username> 0 * <realname>)\r\n");
+			sendToClient(client_fd, "Need an username to be fully authenticated (USER <username> 0 * :<realname>)\r\n");
 		if (client.getNickname().empty())
 			sendToClient(client_fd, "Need a nickname to be fully authenticated (NICK <nickname>)\r\n");
 	}
