@@ -2,6 +2,7 @@
 NAME := IRC
 SRC_DIR := src
 CMDS_DIR := $(SRC_DIR)/commands
+BONUS_DIR := $(SRC_DIR)/bonus
 BUILD_DIR := .build
 INC_DIR := inc
 
@@ -23,7 +24,7 @@ SRC := $(SRC_DIR)/Irc.cpp \
 	   $(CMDS_DIR)/cap.cpp \
 	   $(CMDS_DIR)/who.cpp \
 	   $(CMDS_DIR)/quit.cpp \
-	   $(CMDS_DIR)/bot.cpp
+	   $(BONUS_DIR)/bot.cpp
 
 # Génération des fichiers objets et des dépendances
 OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC))

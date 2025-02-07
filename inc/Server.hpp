@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
+/*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/05 11:15:28 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 14:33:32 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 #include <cstdlib> //atoi
 #include <cstring> //memset
 #include <cerrno>
+#include "ChessBot.hpp"
 
 
 
@@ -86,6 +87,7 @@ class Server
         std::vector<struct pollfd> _poll_fds;
         std::map<std::string, Channel> _channels;
         std::map<int, Client> _clients;
+        std::map<int, ChessBot> _ChessTable;
         std::string _serverPassword;
 };
 
