@@ -25,7 +25,7 @@ class Channel
         Channel(const Channel &other);
         ~Channel(void);
         Channel &operator=(const Channel &other);
-        const std::set<int>& getMembers() const;
+
         void addMember(int fd);
         void removeMember(int fd);
 		void inviteUser(int fd);
@@ -39,6 +39,7 @@ class Channel
 		int			getUserLimit() const;
 
 		std::set<int> & getOperators();
+		std::set<int> & getMembers();
 
 		bool hasKey() const;
 		bool isTopicLocked() const;

@@ -51,11 +51,7 @@ bool Server::part(std::istringstream &iss, int client_fd) {
 			return false;
 		}
 		broadcastToChannel(channel_name, PART(_clients[client_fd].getNickname(), channel_name, reason), -1);
-		
-		_channels[channel_name].removeMember(client_fd);
-		_clients[client_fd].getChannels().erase(channel_name);
-		if (_channels[channel_name].getMembers().empty())
-			_channels.erase(channel_name);
+		leaveChannel(channel_name, client_fd);
 	}
 	
 	return true;

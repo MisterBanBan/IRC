@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 17:22:42 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 18:43:18 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -535,4 +535,11 @@ void Server::authenticate(int client_fd) {
 		if (client.getNickname().empty())
 			sendToClient(client_fd, "Need a nickname to be fully authenticated (NICK <nickname>)\r\n");
 	}
+}
+
+void Server::leaveChannel(const std::string &channel_name, int client_fd) {
+	_channels[channel_name].removeMember(client_fd);
+	_clients[client_fd].getChannels().erase(channel_name);
+	if (_channels[channel_name].getMembers().empty())
+		_channels.erase(channel_name);
 }

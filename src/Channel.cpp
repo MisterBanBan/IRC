@@ -56,7 +56,7 @@ bool Channel::isMember(int fd) const
     return (_members.find(fd) != _members.end());
 }
 
-const std::set<int>& Channel::getMembers() const
+std::set<int>& Channel::getMembers()
 {
     return _members;
 }

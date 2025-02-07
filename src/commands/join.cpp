@@ -6,12 +6,11 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 12:02:49 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 18:09:58 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
-// quand un client se co rajouter sil y a un topic le sujet du topic
 
 bool Server::join(std::istringstream &iss, int client_fd)
 {
@@ -29,6 +28,17 @@ bool Server::join(std::istringstream &iss, int client_fd)
 		return false;
 	}
 	std::vector<std::string> channels = split(channel_str, ',');
+
+	std::cout << channels.size() << std::endl;
+	if (channels.size() == 1 && channels[0] == "0")
+	{
+		for (std::set<std::string>::iterator it = _clients[client_fd].getChannels().begin(); it != _clients[client_fd].getChannels().end(); it++) {
+			broadcastToChannel(*it, PART(_clients[client_fd].getNickname(), *it, ":Leaving"), -1);
+			leaveChannel(channel_str, client_fd);
+		}
+		return true;
+	}
+
 	std::string keys_str;
 	iss >> keys_str;
 	std::vector<std::string> keys;

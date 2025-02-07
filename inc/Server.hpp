@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 11:25:29 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 18:22:57 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ class Server
         void	handleWriteEvent(int client_fd);
         void	disableWriteEvent(int client_fd);
 		void	authenticate(int client_fd);
+		void	leaveChannel(const std::string & channel_name, int client_fd);
 
 		bool	nick(std::istringstream & iss, int client_fd);
 		bool	user(std::istringstream & iss, int client_fd);
