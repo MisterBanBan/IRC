@@ -13,7 +13,6 @@
 #include "Server.hpp"
 
 bool Server::kick(std::istringstream &iss, int client_fd) {
-	//il faut avoir les droits
 	std::string channel_name;
 	std::string target_nick;
 	std::string reason;

@@ -13,7 +13,6 @@
 #include "Server.hpp"
 
 bool Server::topic(std::istringstream &iss, int client_fd) {
-	//si le topic nest pas locked
 	std::string name_channel;
 	iss >> name_channel;
 

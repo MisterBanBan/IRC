@@ -16,8 +16,9 @@
 #include "utils.hpp"
 
 #define KICK(executer, channel, target, reason) (":" + executer + " KICK " + channel + " " + target + " :" + reason + "\r\n")
-#define MODE(executer, channel, flag, arg) (":" + executer + " MODE " + channel + " " + flag + " :" + arg + "\r\n")
 #define PART(executer, channel, reason) (":" + executer + " PART " + channel + " " + executer + " :" + reason + "\r\n")
+#define MODE(executer, channel, flag, arg) (":" + executer + " MODE " + channel + " " + flag + " :" + arg + "\r\n")
+#define INVITE(executer, invited, channel) (":" + executer + " INVITE " + invited + " :" + channel + "\r\n")
 #define TOPIC(executer, channel, topic) (":" + executer + " TOPIC " + channel + " :" + topic + "\r\n")
 #define JOIN(executer, channel) (":" + executer + " JOIN " + channel + "\r\n")
 

@@ -68,10 +68,6 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 			for (it = chan.getOperators().begin(); it != chan.getOperators().end(); it++)
 				response += "\t\t- " + getNickname(*it) + "\r\n";
 
-//			std::cout << "No mode" << std::endl;
-//			std::stringstream response;
-
-			//response << ":localhost 324 " << _clients[client_fd].nickname << chan.getName() << ":\r\n";
 			sendToClient(client_fd, response);
 			return true;
 		}

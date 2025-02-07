@@ -14,7 +14,6 @@
 
 bool Server::invite(std::istringstream &iss, int client_fd)
 {
-	//rajouter les invitations
 	std::string nickname, channelName;
 	iss >> nickname >> channelName;
 
@@ -56,7 +55,6 @@ bool Server::invite(std::istringstream &iss, int client_fd)
 	}
 	_channels[channelName].inviteUser(target);
 	sendToClient(client_fd, RPL_INVITING(getNickname(client_fd), nickname, channelName));
-	std::string notice = ":" + getNickname(client_fd) + " INVITE " + nickname + " :" + channelName + "\r\n";
-	sendToClient(target, notice);
+	sendToClient(target, INVITE(getNickname(client_fd), nickname, channelName));
 	return true;
 }
