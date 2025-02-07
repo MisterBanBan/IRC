@@ -53,21 +53,21 @@ bool Server::join(std::istringstream &iss, int client_fd)
 		}
 		else
 		{
-			if (_channels[channel_name].getLimitUser() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
+			if (_channels[channel_name].hasLimitUser() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
 			{
 				sendToClient(client_fd, ERR_CHANNELISFULL(channel_name));
 				return true;
 			}
 
-			if (_channels[channel_name].getHasKey())
+			if (_channels[channel_name].hasKey())
 			{
                 std::string provided_key = (i < keys.size()) ? keys[i] : "";
-                if (_channels[channel_name].getKey() != provided_key) {
+                if (!_channels[channel_name].isValidKey(provided_key)) {
 					sendToClient(client_fd, ERR_BADCHANNELKEY(channel_name));
                     continue;
                 }
             }
-            if (!_channels[channel_name].getInviteOnly())
+            if (!_channels[channel_name].isInviteOnly())
                 _channels[channel_name].addMember(client_fd);
             else
 			{

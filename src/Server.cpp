@@ -6,14 +6,14 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/05 17:45:57 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 11:27:32 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include "Client.hpp"
 #include <arpa/inet.h>
-#include <sstream>
+#include <crypt.h>
 
 Server::Server(void) : _running(true) { }
 
@@ -48,7 +48,7 @@ int	Server::initServerSocket(const std::string & port, const std::string & pass)
         return 1;
     }
     else
-        this->_serverPassword = pass;
+        this->_serverHashPassword = crypt(pass.c_str(), "$6$RNEuivJ08k");
     //It creates a socket using the protocol IPV4 and a socket orient connexion SOCK_STREAM
     //Concretely, socket() returns a file descriptor (an integer) which identifies this new socket
     //listen on one port
@@ -164,10 +164,10 @@ void Server::acceptNewClient()
 
 }
 
-
 void Server::run()
 {
     std::cout << "Server is running" << std::endl;
+
     while (_running)
     {
         //The poll() function monitors a set of file descriptors for events
@@ -381,7 +381,7 @@ void Server::sendPrivateMessage(int client_fd, const std::string &target, const 
 
 bool Server::isCorrectPasswordServer(const std::string &pass)
 {
-    if (pass == this->_serverPassword)
+    if (crypt(pass.c_str(), "$6$RNEuivJ08k") == this->_serverHashPassword)
         return true;
     return false;
 }

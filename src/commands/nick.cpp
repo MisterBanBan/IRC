@@ -23,12 +23,12 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 	}
 	if (nickname[0] == '#' || nickname[0] == ':' || isdigit(nickname[0]))
 	{
-		sendToClient(client_fd, ERR_NONICKNAMEGIVEN);
+		sendToClient(client_fd, ERR_ERRONEUSNICKNAME(nickname));
 		return false;
 	}
 	if (nickname.find(" ") != std::string::npos)
 	{
-		sendToClient(client_fd, ERR_NONICKNAMEGIVEN);
+		sendToClient(client_fd, ERR_ERRONEUSNICKNAME(nickname));
 		return false;
 	}
 	int target_fd = getFdByNickname(nickname);

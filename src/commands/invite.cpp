@@ -44,7 +44,7 @@ bool Server::invite(std::istringstream &iss, int client_fd)
 		sendToClient(client_fd, ERR_USERONCHANNEL(nickname, channelName));
 		return true;
 	}
-	if (_channels[channelName].getInviteOnly() && !_channels[channelName].isOperator(client_fd))
+	if (_channels[channelName].isInviteOnly() && !_channels[channelName].isOperator(client_fd))
 	{
 		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(channelName));
 		return true;

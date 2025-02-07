@@ -40,22 +40,22 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 		if (modes.empty())
 		{
 			std::string response = "324 Current channel's (" + chan.getName() + ") modes:\r\n- Invite only: ";
-			if (chan.getInviteOnly())
+			if (chan.isInviteOnly())
 				response += "true\r\n";
 			else
 				response += "false\r\n";
 			response += "- Topic locked: ";
-			if (chan.getTopicLocked())
+			if (chan.isTopicLocked())
 				response += "true\r\n";
 			else
 				response += "false\r\n";
 			response += "- Key: ";
-			if (chan.getHasKey())
+			if (chan.hasKey())
 				response += "true\r\n";
 			else
 				response += "false\r\n";
 			response += "- Users limit: ";
-			if (chan.getLimitUser())
+			if (chan.hasLimitUser())
 			{
 				std::stringstream ss;
 				ss << chan.getUserLimit();
@@ -161,7 +161,6 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 									sendToClient(client_fd, ERR_INVALIDMODEPARAM(chan.getName(), "+l", "Needs to be a number and greater than 0"));
 									break;
 								}
-								chan.setLimitUser(add);
 								chan.setUserLimit(nb);
 								broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "+l",
 																			to_string(nb)), -1);
@@ -171,7 +170,6 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 						}
 						else
 						{
-							chan.setLimitUser(add);
 							chan.setUserLimit(0);
 							broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "-l", ""), -1);
 						}

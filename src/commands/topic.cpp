@@ -38,7 +38,7 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, ERR_NOTONCHANNEL(name_channel));
 		return true;
 	}
-	if (_channels[name_channel].getTopicLocked() && !_channels[name_channel].isOperator(client_fd))
+	if (_channels[name_channel].isTopicLocked() && !_channels[name_channel].isOperator(client_fd))
 	{
 		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(name_channel));
 		return true;

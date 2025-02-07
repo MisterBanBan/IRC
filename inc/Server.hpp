@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/05 11:15:28 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 11:25:29 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 #include <cstdlib> //atoi
 #include <cstring> //memset
 #include <cerrno>
+
 
 
 
@@ -86,7 +87,7 @@ class Server
         std::vector<struct pollfd> _poll_fds;
         std::map<std::string, Channel> _channels;
         std::map<int, Client> _clients;
-        std::string _serverPassword;
+        std::string _serverHashPassword;
 };
 
 
