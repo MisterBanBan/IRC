@@ -6,19 +6,23 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/04 10:23:38 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/06 16:40:12 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/10 14:39:41 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "ChessBot.hpp"
 
 bool    isARealMove(std::string msg);
 
 void Server::processBotMessage(int client_fd, const std::string &msg)
 {
     if (isARealMove(msg)) {
-         std::string response = ":Bot PRIVMSG " + getNickname(client_fd) + " :Pong!\r\n";
-         sendToClient(client_fd, response);
+        std::string response = ":Bot PRIVMSG " + getNickname(client_fd) + " :\n";
+        this->_ChessTable[client_fd].ClearCase("a1");
+        this->_ChessTable[client_fd].PutPiece("ChessBoard/BlackQueen.chess", "e4");
+        (this->_ChessTable[client_fd]).PrintBoard(response);
+        sendToClient(client_fd, response);
     }
     else
     {
@@ -26,4 +30,11 @@ void Server::processBotMessage(int client_fd, const std::string &msg)
             " :Hi, if you want to start or continue a Chess game write your move using the format \"OldpositionNewposition\", exemple :\"e2e4\" will move your pawn on e2 to e4\r\n";
          sendToClient(client_fd, response);
     }
+}
+
+bool    isARealMove(std::string msg)
+{
+    if (msg != "\0")
+        return (true);
+    return (false);
 }
