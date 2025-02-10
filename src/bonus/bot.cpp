@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/04 10:23:38 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/10 14:39:41 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/10 17:12:32 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,7 @@ void Server::processBotMessage(int client_fd, const std::string &msg)
 {
     if (isARealMove(msg)) {
         std::string response = ":Bot PRIVMSG " + getNickname(client_fd) + " :\n";
-        this->_ChessTable[client_fd].ClearCase("a1");
-        this->_ChessTable[client_fd].PutPiece("ChessBoard/BlackQueen.chess", "e4");
+        this->_ChessTable[client_fd].MovePiece("e2e4");
         (this->_ChessTable[client_fd]).PrintBoard(response);
         sendToClient(client_fd, response);
     }
