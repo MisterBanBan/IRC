@@ -102,14 +102,8 @@ int	Server::initServerSocket(const std::string & port, const std::string & pass)
         std::cout << "Error: listen failed" << std::endl;
         return 1;
     }
-    int flags = fcntl(_server_fd, F_GETFL, 0); // retrieve the flags of the socket 
-    if (flags < 0)
-    {
-        std::cout << "Error: F_GETFL failed" << std::endl;
-        return 1;
-    }
     // manage multiple connections without blocking
-    if (fcntl(_server_fd, F_SETFL, flags | O_NONBLOCK) < 0) // F_SETFL define a new flags for the socket activate noBLOCK
+    if (fcntl(_server_fd, F_SETFL, O_NONBLOCK) < 0) // F_SETFL define a new flags for the socket activate noBLOCK
     {
         std::cout << "Error: F_SETFL failed" << std::endl;
         return 1;
@@ -138,14 +132,7 @@ void Server::acceptNewClient()
         }
         return;
     }
-    int flags = fcntl(client_fd, F_GETFL, 0);
-    if (flags < 0)
-    {
-        std::cout << "Error: F_GETFL failed" << std::endl;
-        close(client_fd);
-        return;
-    }
-    if (fcntl(client_fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
     {
         std::cout << "Error: F_SETFL failed" << std::endl;
         return;
