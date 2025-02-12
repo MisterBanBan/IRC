@@ -25,7 +25,8 @@ SRC := $(SRC_DIR)/Irc.cpp \
 	   $(CMDS_DIR)/who.cpp \
 	   $(CMDS_DIR)/quit.cpp \
 	   $(BONUS_DIR)/bot.cpp \
-	   $(BONUS_DIR)/ChessBot.cpp
+	   $(BONUS_DIR)/ChessBot.cpp \
+	   $(BONUS_DIR)/ChessBot_getter.cpp
 
 # Génération des fichiers objets et des dépendances
 OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC))

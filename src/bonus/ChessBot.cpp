@@ -6,17 +6,17 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/07 14:41:50 by arvoyer           #+#    #+#             */
-/*   Updated: 2025/02/10 17:24:18 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/12 14:27:24 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ChessBot.hpp"
-#include <fstream>
-#include <iostream>
+
+std::string CallAPI(const char* cmd);
 
 ChessBot::ChessBot()
 {
-	_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+	_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 	
 	std::ifstream	in("ChessBoard/ChessBoard.chess");
 	if (in.is_open() == false)
@@ -25,51 +25,31 @@ ChessBot::ChessBot()
 		return ;
 	}
 	
-	_board = new std::string[45];
+	for (int j = 0; j < 8; j++)
+		this->_table.push_back("00000000");
+	this->MakeTableFromFen();
 	
 	std::string line;
-	int			i;
 
-	i = 0;
 	while (in.eof() == false)
 	{
 		std::getline(in, line);
-		_board[i] = line;
-		_board[i] += "\n";
-		i++;
+		_board.push_back(line + "\n");
 	}
 }
 
-ChessBot::ChessBot(const ChessBot &copy)
-{
-	this->_fen = copy._fen;
-	
-	this->_board = new std::string[45];
-	for (int i = 0; i < 45; i++)
-		this->_board[i] = copy._board[i];
-}
-
-ChessBot &ChessBot::operator=(const ChessBot &other)
-{
-	if (this != &other)
-	{
-		this->_fen = other._fen;
-		for (int i = 0; i < 45; i++)
-			this->_board[i] = other._board[i];
-	}
-	return (*this);
-}
-
-ChessBot::~ChessBot()
-{
-	delete[] _board;
-}
+ChessBot::~ChessBot() {}
 
 void	ChessBot::PrintBoard(std::string &response)
 {
-	for (int i = 0; i < 45; i++)
+	if (_fen == "\0")
 	{
-		response += _board[i];
+		response += "This isn't a valid move\n";
+		return ;
+	}
+	for (std::vector<std::string>::iterator i = _board.begin(); i != _board.end(); i++)
+	{
+		response += *i;
 	}
 	response += "\n";
 }
@@ -122,120 +102,63 @@ void	ChessBot::PutPiece(std::string piece, int i, int j)
 	}
 }
 
-int		ChessBot::GetPosI(char pos)
-{
-	int	i = 0;
-	
-	while (i < pos - 'a')
-	{
-		i++;
-	}
-
-	i = SIDEBORDER + i * CASEWIDTH;
-	return (i);
-}
-
-int		ChessBot::GetPosJ(char pos)
-{
-	int	j = 0;
-
-	while (j < pos - '0')
-	{
-		j++;
-	}
-	j = 8 - j;
-
-	j = TOPBORDER + j * CASEHEIGHT;
-	return (j);
-}
-
-std::string	ChessBot::GetPieceFile(char piece)
-{
-	std::string piece_file;
-	
-	switch (piece)
-	{
-		case 'r':
-			piece_file = "ChessBoard/BlackRook.chess";
-			break ;
-		case 'n':
-			piece_file = "ChessBoard/BlackKnight.chess";
-			break ;
-		case 'b':
-			piece_file = "ChessBoard/BlackBishop.chess";
-			break ;
-		case 'k':
-			piece_file = "ChessBoard/BlackKing.chess";
-			break ;
-		case 'q':
-			piece_file = "ChessBoard/BlackQueen.chess";
-			break ;
-		case 'p':
-			piece_file = "ChessBoard/BlackPawn.chess";
-			break ;
-		case 'R':
-			piece_file = "ChessBoard/WhiteRook.chess";
-			break ;
-		case 'N':
-			piece_file = "ChessBoard/WhiteKnight.chess";
-			break ;
-		case 'B':
-			piece_file = "ChessBoard/WhiteBishop.chess";
-			break ;
-		case 'K':
-			piece_file = "ChessBoard/WhiteKing.chess";
-			break ;
-		case 'Q':
-			piece_file = "ChessBoard/WhiteQueen.chess";
-			break ;
-		case 'P':
-			piece_file = "ChessBoard/WhitePawn.chess";
-			break ;
-		default:
-			return (piece_file); // error
-	}
-	return (piece_file);
-}
-
-int	ChessBot::GetFenPos(std::string pos)
-{
-	int	lineI = 8 - (pos[1] - '0');
-	int	i = 0;
-
-	while (lineI > 0)
-	{
-		if (_fen[i] == '/')
-			lineI--;
-		i++;
-	}
-
-	int lineJ = pos[0] - 'a';
-
-	while (lineJ > 0)
-	{
-		if (_fen[i] >= '1' && _fen[i] <= '8')
-			lineJ -= _fen[i] - '0';
-		i++;
-		lineJ--;
-	}
-	
-	if (lineJ < 0)
-		return (-1); // error
-	return (i);
-}
-
 void	ChessBot::MovePiece(std::string movement)
 {
 	int	i = this->GetFenPos(movement);
 	char piece = _fen[i];
 	
+	if (!std::isalpha(piece))
+	{
+		_fen = "\0";
+		return ;
+	}
+	
 	this->ClearCase(this->GetPosI(movement[0]), this->GetPosJ(movement[1]));
 	std::string piece_file = this->GetPieceFile(piece);
+	this->ClearCase(this->GetPosI(movement[2]), this->GetPosJ(movement[3]));
 	this->PutPiece(piece_file, this->GetPosI(movement[2]), this->GetPosJ(movement[3]));
-
-	_fen[i] = '1';
 	
+	_table[8 - (movement[1] - '0')][movement[0] - 'a'] = '0';
+
 	movement.erase(0, 2);
-	i = this->GetFenPos(movement);
-	// Finir le remplacement du fen avec la nouvelle pos de la piece et si la nouvelle pos est un chiffre autre que 1 change la string en consequence
+		
+	_table[8 - (movement[1] - '0')][movement[0] - 'a'] = piece;
+	
+	this->MakeFenFromTable();
+}
+
+std::string	ChessBot::MakeABotMove()
+{
+    std::string url = "https://chess-stockfish-16-api.p.rapidapi.com/chess/api";
+    std::string apiKey = "5a6aa54142msh45f81e3897d6fcap1aa1bejsn148d461e8c21";
+    std::string apiHost = "chess-stockfish-16-api.p.rapidapi.com";
+
+    std::string command = "curl -s -X POST \"" + url + "\" "
+                          "-H \"x-rapidapi-key: " + apiKey + "\" "
+                          "-H \"x-rapidapi-host: " + apiHost + "\" "
+                          "-H \"Content-Type: application/x-www-form-urlencoded\" "
+                          "-d \"fen=" + _fen + "\"";
+
+    try
+	{
+        std::string response = CallAPI(command.c_str());
+        return (response);
+    }
+	catch (const std::exception& e) {
+        std::cerr << "Erreur : " << e.what() << std::endl;
+    }
+	
+	std::string response = "\0";
+	return (response);
+}
+
+void	ChessBot::ParseBotMove(std::string movement, std::string &response)
+{
+	if (movement == "\0" || _fen == "\0")
+		return ;
+	size_t	i = movement.find("\"bestmove\":");
+	std::string move = movement.substr(i + 12, 4);
+	
+	this->MovePiece(move);
+	response += move + "\n";
 }
