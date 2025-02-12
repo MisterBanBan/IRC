@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/07 14:41:50 by arvoyer           #+#    #+#             */
-/*   Updated: 2025/02/12 14:27:24 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/12 15:09:14 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ void ChessBot::ClearCase(int i, int j)
 
 	char ClearChar = _board[j][i];
 	
-	for (; j < jEnd; j++)
+	for (; j <= jEnd; j++)
 	{
 		for (; i < iEnd; i++)
 		{
