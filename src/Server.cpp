@@ -30,11 +30,6 @@ void Server::stop()
 
 int	Server::initServerSocket(const std::string & port, const std::string & pass)
 {
-    if (port != "6667")
-    {
-        std::cout << "<port> is 6667" << std::endl;
-        return 1;
-    }
 	char *end;
     int portInt = strtol(port.c_str(), &end, 10);
     if (*end != '\0')
