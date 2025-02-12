@@ -525,3 +525,16 @@ void Server::leaveChannel(const std::string &channel_name, int client_fd) {
 	if (_channels[channel_name].getMembers().empty())
 		_channels.erase(channel_name);
 }
+
+std::vector <std::string> Server::split(const std::string &s, char delimiter)
+{
+	std::vector<std::string> tokens;
+	std::istringstream iss(s);
+	std::string token;
+	while (std::getline(iss, token, delimiter))
+	{
+		if (!token.empty())
+			tokens.push_back(token);
+	}
+	return tokens;
+}

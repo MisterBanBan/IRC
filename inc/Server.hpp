@@ -69,18 +69,7 @@ class Server
         bool    quit(std::istringstream &iss, int client_fd);
         void    processBotMessage(int client_fd, const std::string &msg);
         void    stop();
-        std::vector<std::string> split(const std::string &s, char delimiter)
-        {
-            std::vector<std::string> tokens;
-            std::istringstream iss(s);
-            std::string token;
-            while (std::getline(iss, token, delimiter))
-            {
-                if (!token.empty())
-                    tokens.push_back(token);
-            }
-            return tokens;
-        }
+        std::vector<std::string> split(const std::string &s, char delimiter);
         void run();
         ~Server(void);
         Server &operator=(const Server &other);
