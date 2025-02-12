@@ -1,5 +1,5 @@
 # Variables de base
-NAME := IRC
+NAME := ircserv
 SRC_DIR := src
 CMDS_DIR := $(SRC_DIR)/commands
 BUILD_DIR := .build
