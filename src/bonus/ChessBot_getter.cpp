@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/12 14:18:29 by arvoyer           #+#    #+#             */
-/*   Updated: 2025/02/12 14:20:02 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/17 14:06:27 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,9 @@
 int		ChessBot::GetPosI(char pos)
 {
 	int	i = 0;
+	
+	if (pos - 'a' < 0 || pos - 'a' > 7)
+		return (-1);
 	
 	while (i < pos - 'a')
 	{
@@ -28,6 +31,9 @@ int		ChessBot::GetPosI(char pos)
 int		ChessBot::GetPosJ(char pos)
 {
 	int	j = 0;
+
+	if (pos - '0' < 1 || pos - '0' > 8)
+		return (-1);
 
 	while (j < pos - '0')
 	{
@@ -92,17 +98,16 @@ int	ChessBot::GetFenPos(std::string pos)
 
 	while (lineI > 0)
 	{
-		if (_fen[i] == '/')
+		if (_fen[0][i] == '/')
 			lineI--;
 		i++;
 	}
 
 	int lineJ = pos[0] - 'a';
-
 	while (lineJ > 0)
 	{
-		if (_fen[i] >= '1' && _fen[i] <= '8')
-			lineJ -= _fen[i] - '0';
+		if (_fen[0][i] >= '1' && _fen[0][i] <= '8')
+			lineJ -= _fen[0][i] - '0';
 		else
 			lineJ--;
 		i++;
@@ -122,14 +127,14 @@ void	ChessBot::MakeTableFromFen()
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			if (!std::isalnum(_fen[fen_i]))
+			if (!std::isalnum(_fen[0][fen_i]))
 				fen_i++;
-			if (std::isalpha(_fen[fen_i]))
-				_table[i][j] = _fen[fen_i];
+			if (std::isalpha(_fen[0][fen_i]))
+				_table[i][j] = _fen[0][fen_i];
 			else
 			{
 				if (temp <= 0)
-					temp = _fen[fen_i] - '0';
+					temp = _fen[0][fen_i] - '0';
 				_table[i][j] = '0';
 				temp--;
 				if (temp > 0)
@@ -144,26 +149,26 @@ void	ChessBot::MakeFenFromTable()
 {
 	int	fen_i = 0;
 
-	_fen = "xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx";
+	_fen.insert(_fen.begin(), "xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx");
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			if (!std::isalnum(_fen[fen_i]))
+			if (!std::isalnum(_fen[0][fen_i]))
 				fen_i++;
 			if (std::isalpha(_table[i][j]))
-				_fen[fen_i] = _table[i][j];
+				_fen[0][fen_i] = _table[i][j];
 			else
-				_fen[fen_i] = '1';
+				_fen[0][fen_i] = '1';
 			fen_i++;
 		}	
 	}
-	for (int i = 0; _fen[i]; i++)
+	for (int i = 0; _fen[0][i]; i++)
 	{
-		if (std::isdigit(_fen[i]) && i > 0 && std::isdigit(_fen[i - 1]))
+		if (std::isdigit(_fen[0][i]) && i > 0 && std::isdigit(_fen[0][i - 1]))
 		{
-			_fen[i - 1] += (_fen[i] - '0');
-			_fen.erase(i, 1);
+			_fen[0][i - 1] += (_fen[0][i] - '0');
+			_fen[0].erase(i, 1);
 			i--;
 		}
 	}

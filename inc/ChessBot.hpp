@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/07 13:38:35 by arvoyer           #+#    #+#             */
-/*   Updated: 2025/02/12 13:51:53 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/17 13:31:23 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,8 +30,6 @@ class ChessBot
 {
 	public:
 		ChessBot();
-		//ChessBot(const ChessBot &copy);
-	//	ChessBot &operator=(const ChessBot &other);
 		~ChessBot();
 
 		void	 	PrintBoard(std::string &response);
@@ -48,9 +46,9 @@ class ChessBot
 		void		MakeTableFromFen();
 		void		MakeFenFromTable();
 	private:
-		std::string	_fen;
-		std::vector<std::string> _board;
-		std::vector<std::string> _table;
+		std::vector<std::string>	_fen;
+		std::vector<std::string>	_board;
+		std::vector<std::string>	_table;
 };
 
 #endif

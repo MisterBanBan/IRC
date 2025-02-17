@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/07 14:41:50 by arvoyer           #+#    #+#             */
-/*   Updated: 2025/02/12 15:09:14 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/17 15:03:39 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,19 +16,19 @@ std::string CallAPI(const char* cmd);
 
 ChessBot::ChessBot()
 {
-	_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-	
+	_fen.insert(_fen.begin(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+
 	std::ifstream	in("ChessBoard/ChessBoard.chess");
 	if (in.is_open() == false)
 	{
-		_fen = "\0";
+		_fen[0] = "\0";
 		return ;
 	}
-	
+
 	for (int j = 0; j < 8; j++)
 		this->_table.push_back("00000000");
 	this->MakeTableFromFen();
-	
+
 	std::string line;
 
 	while (in.eof() == false)
@@ -42,7 +42,7 @@ ChessBot::~ChessBot() {}
 
 void	ChessBot::PrintBoard(std::string &response)
 {
-	if (_fen == "\0")
+	if (_fen[0] == "\0")
 	{
 		response += "This isn't a valid move\n";
 		return ;
@@ -54,7 +54,8 @@ void	ChessBot::PrintBoard(std::string &response)
 	response += "\n";
 }
 
-void ChessBot::ClearCase(int i, int j)
+
+	void ChessBot::ClearCase(int i, int j)
 {
 	int iEnd = i + CASEWIDTH - 1;
 	int jEnd = j + CASEHEIGHT - 1;
@@ -63,11 +64,11 @@ void ChessBot::ClearCase(int i, int j)
 	
 	for (; j <= jEnd; j++)
 	{
-		for (; i < iEnd; i++)
+		for (; i <= iEnd; i++)
 		{
 			_board[j][i] = ClearChar;
 		}
-		i -= CASEWIDTH - 1;
+		i -= CASEWIDTH;
 	}
 }
 
@@ -76,13 +77,12 @@ void	ChessBot::PutPiece(std::string piece, int i, int j)
 	std::ifstream	in(piece.c_str());
 	if (in.is_open() == false)
 	{
-		_fen = "\0";
+		_fen.insert(_fen.begin(),"\0");
 		return ;
 	}
 
 	i--;
 	int starti = i;
-
 	std::string line;
 
 	while (in.eof() == false)
@@ -104,12 +104,19 @@ void	ChessBot::PutPiece(std::string piece, int i, int j)
 
 void	ChessBot::MovePiece(std::string movement)
 {
-	int	i = this->GetFenPos(movement);
-	char piece = _fen[i];
-	
-	if (!std::isalpha(piece))
+	if (this->GetPosI(movement[0]) == -1 || this->GetPosJ(movement[1]) == -1 \
+		|| this->GetPosI(movement[2]) == -1 || this->GetPosJ(movement[3]) == -1)
 	{
-		_fen = "\0";
+		_fen.insert(_fen.begin(),"\0");
+		return ;
+	}
+	
+	int	i = this->GetFenPos(movement);
+	char piece = _fen[0][i];
+	
+	if (!std::isalpha(piece)) // isupper avec une separation avec le bot
+	{
+		_fen.insert(_fen.begin(),"\0");
 		return ;
 	}
 	
@@ -137,7 +144,7 @@ std::string	ChessBot::MakeABotMove()
                           "-H \"x-rapidapi-key: " + apiKey + "\" "
                           "-H \"x-rapidapi-host: " + apiHost + "\" "
                           "-H \"Content-Type: application/x-www-form-urlencoded\" "
-                          "-d \"fen=" + _fen + "\"";
+                          "-d \"fen=" + _fen[0] + "\"";
 
     try
 	{
@@ -154,7 +161,7 @@ std::string	ChessBot::MakeABotMove()
 
 void	ChessBot::ParseBotMove(std::string movement, std::string &response)
 {
-	if (movement == "\0" || _fen == "\0")
+	if (movement == "\0" || _fen[0] == "\0")
 		return ;
 	size_t	i = movement.find("\"bestmove\":");
 	std::string move = movement.substr(i + 12, 4);
