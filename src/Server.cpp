@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 18:43:18 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/17 13:25:26 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,19 +31,27 @@ void Server::stop()
 int	Server::initServerSocket(const std::string & port, const std::string & pass)
 {
 	char *end;
+
+	if (port.size() != 4)
+	{
+		std::cout << "Error: Port needs to contain 4 numbers" << std::endl;
+		return 1;
+	}
+
     int portInt = strtol(port.c_str(), &end, 10);
     if (*end != '\0')
     {
-        std::cout << "Error: Convert port failed" << std::endl;
+        std::cout << "Error: Port is invalid" << std::endl;
         return 1;
     }
+
     if (pass.empty())
     {
         std::cout << "Error: Password is empty" << std::endl;
         return 1;
     }
-    else
-        this->_serverHashPassword = crypt(pass.c_str(), "$6$RNEuivJ08k");
+
+	this->_serverHashPassword = crypt(pass.c_str(), "$6$RNEuivJ08k");
     //It creates a socket using the protocol IPV4 and a socket orient connexion SOCK_STREAM
     //Concretely, socket() returns a file descriptor (an integer) which identifies this new socket
     //listen on one port
@@ -155,9 +163,9 @@ void Server::run()
         //The poll() function monitors a set of file descriptors for events
         //_poll_fds.data() to the first element of the _poll_fds vector, which contains the pollfd structures describing the file descriptors to monitor
         int ret = poll(_poll_fds.data(), _poll_fds.size(), -1); // Timeout infini if ret < 0 error
-        if(ret < 0)
+        if (ret < 0 && _running)
         {
-            std::cout << "Error: poll failde" << std::endl;
+            std::cout << "Error: poll failed" << std::endl;
             break;
         }
         for (size_t i = 0; i < _poll_fds.size();)

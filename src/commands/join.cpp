@@ -29,7 +29,6 @@ bool Server::join(std::istringstream &iss, int client_fd)
 	}
 	std::vector<std::string> channels = split(channel_str, ',');
 
-	std::cout << channels.size() << std::endl;
 	if (channels.size() == 1 && channels[0] == "0")
 	{
 		for (std::set<std::string>::iterator it = _clients[client_fd].getChannels().begin(); it != _clients[client_fd].getChannels().end(); it++) {
@@ -110,7 +109,6 @@ bool Server::join(std::istringstream &iss, int client_fd)
 			users << getNickname(*it);
 		}
 
-		std::cout << chan.getName() << std::endl;
 		sendToClient(client_fd, RPL_NAMREPLY(getNickname(client_fd), channel_name, users.str()));
 		sendToClient(client_fd, RPL_ENDOFNAMES(getNickname(client_fd), channel_name));
 	}

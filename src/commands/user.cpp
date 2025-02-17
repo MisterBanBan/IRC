@@ -31,7 +31,6 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 
 	std::vector<std::string>	args	=	split(realname, ' ');
 
-	std::cout << args.size() << std::endl;
 	if (args.size() < 3)
 	{
 		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "USER"));
