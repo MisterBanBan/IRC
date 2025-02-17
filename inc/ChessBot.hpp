@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/07 13:38:35 by arvoyer           #+#    #+#             */
-/*   Updated: 2025/02/17 13:31:23 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/17 19:19:57 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,9 @@ class ChessBot
 		void 		ClearCase(int i, int j);
 		void 		PutPiece(std::string piece, int j, int i);
 		std::string	MakeABotMove();
+		void		MakeAPlayerMove(std::string movement);
 		void		ParseBotMove(std::string movement, std::string &response);
+		void		reset();
 		
 		int			GetPosI(char pos);
 		int			GetPosJ(char pos);
@@ -45,6 +47,7 @@ class ChessBot
 		int			GetFenPos(std::string pos);
 		void		MakeTableFromFen();
 		void		MakeFenFromTable();
+		bool		There2King();
 	private:
 		std::vector<std::string>	_fen;
 		std::vector<std::string>	_board;

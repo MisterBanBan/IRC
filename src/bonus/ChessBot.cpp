@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/07 14:41:50 by arvoyer           #+#    #+#             */
-/*   Updated: 2025/02/17 15:03:39 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/17 19:22:05 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,8 @@ void	ChessBot::PrintBoard(std::string &response)
 {
 	if (_fen[0] == "\0")
 	{
-		response += "This isn't a valid move\n";
+		if (response.find("This isn't a valid move\n") == response.npos && response.find("You lose...\n") == response.npos)
+			response += "This isn't a valid move\n";
 		return ;
 	}
 	for (std::vector<std::string>::iterator i = _board.begin(); i != _board.end(); i++)
@@ -104,21 +105,10 @@ void	ChessBot::PutPiece(std::string piece, int i, int j)
 
 void	ChessBot::MovePiece(std::string movement)
 {
-	if (this->GetPosI(movement[0]) == -1 || this->GetPosJ(movement[1]) == -1 \
-		|| this->GetPosI(movement[2]) == -1 || this->GetPosJ(movement[3]) == -1)
-	{
-		_fen.insert(_fen.begin(),"\0");
-		return ;
-	}
-	
+	if (_fen[0] == "\0")
+		return;
 	int	i = this->GetFenPos(movement);
 	char piece = _fen[0][i];
-	
-	if (!std::isalpha(piece)) // isupper avec une separation avec le bot
-	{
-		_fen.insert(_fen.begin(),"\0");
-		return ;
-	}
 	
 	this->ClearCase(this->GetPosI(movement[0]), this->GetPosJ(movement[1]));
 	std::string piece_file = this->GetPieceFile(piece);
@@ -134,8 +124,30 @@ void	ChessBot::MovePiece(std::string movement)
 	this->MakeFenFromTable();
 }
 
+void ChessBot::MakeAPlayerMove(std::string movement)
+{
+	if (this->GetPosI(movement[0]) == -1 || this->GetPosJ(movement[1]) == -1 \
+		|| this->GetPosI(movement[2]) == -1 || this->GetPosJ(movement[3]) == -1)
+	{
+		_fen.insert(_fen.begin(),"\0");
+		return ;
+	}
+	
+	int	i = this->GetFenPos(movement);
+	char piece = _fen[0][i];
+	
+	if (!std::isupper(piece))
+	{
+		_fen.insert(_fen.begin(),"\0");
+		return ;
+	}
+}
+
 std::string	ChessBot::MakeABotMove()
 {
+	if (!this->There2King())
+		return ("\0");
+	
     std::string url = "https://chess-stockfish-16-api.p.rapidapi.com/chess/api";
     std::string apiKey = "5a6aa54142msh45f81e3897d6fcap1aa1bejsn148d461e8c21";
     std::string apiHost = "chess-stockfish-16-api.p.rapidapi.com";
@@ -154,18 +166,35 @@ std::string	ChessBot::MakeABotMove()
 	catch (const std::exception& e) {
         std::cerr << "Erreur : " << e.what() << std::endl;
     }
-	
-	std::string response = "\0";
-	return (response);
+	return ("\0");
 }
 
 void	ChessBot::ParseBotMove(std::string movement, std::string &response)
 {
 	if (movement == "\0" || _fen[0] == "\0")
+	{
+		if (_fen[0] != "\0")
+			_fen.insert(_fen.begin(), "\0");
 		return ;
+	}
 	size_t	i = movement.find("\"bestmove\":");
 	std::string move = movement.substr(i + 12, 4);
 	
+	std::cout << "move: " << move << std::endl << movement << std::endl;
+
+	if (move == "none" || movement.find("\"bestmove\":") == movement.npos)
+	{
+		response += "You lose...\n";
+		_fen.insert(_fen.begin(), "\0");
+		return ;
+	}
+
 	this->MovePiece(move);
 	response += move + "\n";
+}
+
+void	ChessBot::reset()
+{
+	ChessBot newBot;
+	*this = newBot;
 }

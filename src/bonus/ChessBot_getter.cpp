@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/12 14:18:29 by arvoyer           #+#    #+#             */
-/*   Updated: 2025/02/17 14:06:27 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/17 18:59:48 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,4 +172,22 @@ void	ChessBot::MakeFenFromTable()
 			i--;
 		}
 	}
+}
+
+bool	ChessBot::There2King()
+{
+	bool	WKing = false;
+	bool	BKing = false;
+	
+	for (int i = 0; _fen[0][i]; i++)
+	{
+		if ((_fen[0][i] == 'K' && WKing == true) || (_fen[0][i] == 'k' && BKing == true))
+			return (false);
+		if (_fen[0][i] == 'K')
+			WKing = true;
+		if (_fen[0][i] == 'k')
+			BKing = true;
+	}
+
+	return (WKing && BKing);
 }
