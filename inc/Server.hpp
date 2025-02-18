@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 18:22:57 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/18 17:24:37 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,8 @@ class Server
         bool    quit(std::istringstream &iss, int client_fd);
         void    processBotMessage(int client_fd, const std::string &msg);
         void    stop();
+        std::string extractFileName(const std::string &filePath);
+        void    handleSendFileCommand(int sender_fd, const std::string &destNick, const std::string &filePath);
         std::vector<std::string> split(const std::string &s, char delimiter);
         void run();
         ~Server(void);
