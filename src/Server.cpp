@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/18 20:38:38 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/18 20:49:43 by mtbanban         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -315,6 +315,12 @@ void Server::clientData(int client_fd)
                 continue;
             return;
         }
+        else if (cmd == "FILE")
+        {
+            if (handleSendFileCommand(client_fd,))
+                continue;
+            return;
+        }
         else
             sendToClient(client_fd, ERR_UNKNOWNCOMMAND(getNickname(client_fd), cmd));
     }
@@ -558,20 +564,24 @@ std::string Server::extractFileName(const std::string &filePath)
     return fileName;
 }
 
-void Server::handleSendFileCommand(int sender_fd, const std::string &destNick, const std::string &filePath)
+void Server::handleSendFileCommand(std::istringstream & iss, int client_fd)
 {
-
+    std::string filePath;
+    std::string destNick;
+    std::string fileName;
+    iss >> destNick >> filePath;
+    fileName = extractFileName(filePath);
     std::map<std::string, Client>::iterator it = _clientsByNick.find(destNick);
     if (it == _clientsByNick.end())
     {
-		sendToClient(sender_fd, ERR_NOSUCHNICK(getNickname(sender_fd), destNick));
+		sendToClient(client_fd, ERR_NOSUCHNICK(getNickname(client_fd), destNick));
 		return true;
     }
-    int fd_dest = it->second.getFd();
+    int dest_fd = it->second.getFd();
     std::ifstream file(filePath.c_str(), std::ios::binary);
     if (!file)
     {
-        sendToClient(sender_fd, ERR_FILEDTOOPENFILE());
+        sendToClient(client_fd, ERR_FILEDTOOPENFILE());
         return;
     }
     file.seekg(0, std::ios::end);
