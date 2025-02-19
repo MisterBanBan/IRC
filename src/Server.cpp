@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/18 20:49:43 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/17 13:25:26 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -315,12 +315,6 @@ void Server::clientData(int client_fd)
                 continue;
             return;
         }
-        else if (cmd == "FILE")
-        {
-            if (handleSendFileCommand(client_fd,))
-                continue;
-            return;
-        }
         else
             sendToClient(client_fd, ERR_UNKNOWNCOMMAND(getNickname(client_fd), cmd));
     }
@@ -551,64 +545,4 @@ std::vector <std::string> Server::split(const std::string &s, char delimiter)
 			tokens.push_back(token);
 	}
 	return tokens;
-}
-
-std::string Server::extractFileName(const std::string &filePath)
-{
-    std::string fileName;
-    size_t pos = filePath.find_last_of("/\\");
-    if (pos != std::string::npos)
-        fileName = filePath.substr(pos + 1);
-    else
-        fileName = filePath;
-    return fileName;
-}
-
-void Server::handleSendFileCommand(std::istringstream & iss, int client_fd)
-{
-    std::string filePath;
-    std::string destNick;
-    std::string fileName;
-    iss >> destNick >> filePath;
-    fileName = extractFileName(filePath);
-    std::map<std::string, Client>::iterator it = _clientsByNick.find(destNick);
-    if (it == _clientsByNick.end())
-    {
-		sendToClient(client_fd, ERR_NOSUCHNICK(getNickname(client_fd), destNick));
-		return true;
-    }
-    int dest_fd = it->second.getFd();
-    std::ifstream file(filePath.c_str(), std::ios::binary);
-    if (!file)
-    {
-        sendToClient(client_fd, ERR_FILEDTOOPENFILE());
-        return;
-    }
-    file.seekg(0, std::ios::end);
-    std::streampos fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::string fileName = extractFileName(filePath);
-
-    std::stringstream ss;
-    ss << "FILE " << fileName << " " << fileSize << "\n";
-    std::string headerMsg = ss.str();
-    send(dest_fd, headerMsg.c_str(), headerMsg.size(), 0);
-
-    const size_t bufferSize = 1024;
-    char buffer[bufferSize];
-    while (!file.eof()) {
-        file.read(buffer, bufferSize);
-        std::streamsize bytesRead = file.gcount();
-        if (bytesRead > 0)
-        {
-            ssize_t sent = send(dest_fd, buffer, bytesRead, 0);
-            if (sent < 0)
-            {
-                std::cerr << "Error: send failed during file transfer." << std::endl;
-                return;
-            }
-        }
-    }
-    //send a confirmation to succes
 }

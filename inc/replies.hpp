@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   replies.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/05 10:29:24 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/18 20:33:43 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/07 15:26:15 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,6 @@
 #define ERR_CHANOPRIVSNEEDED(nick, channel) (":localhost 482 " + nick + " " + channel + " :You're not a channel operator\r\n")						// 482
 #define ERR_UMODEUNKNOWNFLAG(nick, flag) (":localhost 501 " + nick + " " + flag + " :Unknown MODE flag\r\n")										// 501
 #define ERR_INVALIDMODEPARAM(nick, channel, arg, desc) (":localhost 696 " + nick + " " + channel + " " + arg + " :" + desc + "\r\n")				// 696
-#define ERR_FILEDTOOPENFILE()("Error: Failed to open file.\n");
+
 
 #endif
