@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
+/*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 18:22:57 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/12 12:42:21 by arvoyer          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 #include <cstdlib> //atoi
 #include <cstring> //memset
 #include <cerrno>
+#include "ChessBot.hpp"
 
 
 
@@ -67,7 +68,7 @@ class Server
         bool    cap(std::istringstream &iss, int client_fd);
         bool    who(std::istringstream &iss, int client_fd);
         bool    quit(std::istringstream &iss, int client_fd);
-        void    processBotMessage(int client_fd, const std::string &msg);
+        void    processBotMessage(int client_fd, std::string &msg);
         void    stop();
         std::vector<std::string> split(const std::string &s, char delimiter);
         void run();
@@ -79,6 +80,7 @@ class Server
         std::vector<struct pollfd> _poll_fds;
         std::map<std::string, Channel> _channels;
         std::map<int, Client> _clients;
+        std::map<int, ChessBot> _ChessTable;
         std::string _serverHashPassword;
 };
 
