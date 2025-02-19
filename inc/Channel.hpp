@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/29 09:14:22 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/01/30 14:39:35 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 11:27:53 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ class Channel
         Channel(const Channel &other);
         ~Channel(void);
         Channel &operator=(const Channel &other);
-        const std::set<int>& getMembers() const;
+
         void addMember(int fd);
         void removeMember(int fd);
 		void inviteUser(int fd);
@@ -36,20 +36,19 @@ class Channel
 
         std::string getTopic() const;
 		std::string getName() const;
-		std::string	getKey() const;
 		int			getUserLimit() const;
 
 		std::set<int> & getOperators();
+		std::set<int> & getMembers();
 
-		bool getHasKey() const;
-		bool getTopicLocked() const;
-		bool getInviteOnly() const;
-		bool getLimitUser() const;
+		bool hasKey() const;
+		bool hasUserLimit() const;
+		bool isTopicLocked() const;
+		bool isInviteOnly() const;
+		bool isValidKey(const std::string & key) const;
 
 		void setTopicLocked(bool active);
-		void setHasKey(bool active);
 		void setInviteOnly(bool active);
-		void setLimitUser(bool active);
 
 		void setUserLimit(int limit);
 		void setKey(const std::string & key);
@@ -63,10 +62,8 @@ class Channel
 
 		bool		_inviteOnly; //+i
 		bool		_topicLocked; //+t
-		bool		_hasKey; //+k
-		std::string	_key;
-		bool		_limitUser; //+l
-		int			_userLimit;
+		std::string	_hashKey; // +k
+		int			_userLimit; //+l
 
 		std::set<int> _operators; //+o
 };

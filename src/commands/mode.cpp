@@ -18,13 +18,13 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		sendToClient(client_fd, ERR_NOTREGISTERED);
+		sendToClient(client_fd, ERR_NOTREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 
 	if (channelOrUser.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("MODE"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "MODE"));
 		return true;
 	}
 
@@ -32,7 +32,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 	{
 		if (_channels.find(channelOrUser) == _channels.end())
 		{
-			sendToClient(client_fd, ERR_NOSUCHCHANNEL(channelOrUser));
+			sendToClient(client_fd, ERR_NOSUCHCHANNEL(getNickname(client_fd), channelOrUser));
 			return true;
 		}
 		Channel &chan = _channels[channelOrUser];
@@ -40,22 +40,22 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 		if (modes.empty())
 		{
 			std::string response = "324 Current channel's (" + chan.getName() + ") modes:\r\n- Invite only: ";
-			if (chan.getInviteOnly())
+			if (chan.isInviteOnly())
 				response += "true\r\n";
 			else
 				response += "false\r\n";
 			response += "- Topic locked: ";
-			if (chan.getTopicLocked())
+			if (chan.isTopicLocked())
 				response += "true\r\n";
 			else
 				response += "false\r\n";
 			response += "- Key: ";
-			if (chan.getHasKey())
+			if (chan.hasKey())
 				response += "true\r\n";
 			else
 				response += "false\r\n";
 			response += "- Users limit: ";
-			if (chan.getLimitUser())
+			if (chan.hasUserLimit())
 			{
 				std::stringstream ss;
 				ss << chan.getUserLimit();
@@ -68,23 +68,19 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 			for (it = chan.getOperators().begin(); it != chan.getOperators().end(); it++)
 				response += "\t\t- " + getNickname(*it) + "\r\n";
 
-//			std::cout << "No mode" << std::endl;
-//			std::stringstream response;
-
-			//response << ":localhost 324 " << _clients[client_fd].nickname << chan.getName() << ":\r\n";
 			sendToClient(client_fd, response);
 			return true;
 		}
 
 		if (!chan.isMember(client_fd))
 		{
-			sendToClient(client_fd, ERR_NOTONCHANNEL(chan.getName()));
+			sendToClient(client_fd, ERR_NOTONCHANNEL(getNickname(client_fd), chan.getName()));
 			return false;
 		}
 
 		if (!chan.isOperator(client_fd))
 		{
-			sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(chan.getName()));
+			sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(getNickname(client_fd), chan.getName()));
 			return false;
 		}
 
@@ -100,7 +96,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 					add = true;
 				if (modes[i] != '+' && modes[i] != '-' && i == 0)
 				{
-					sendToClient(client_fd, ERR_INVALIDMODEPARAM(chan.getName(), modes[i], "Modes needs to start with - or +"));
+					sendToClient(client_fd, ERR_INVALIDMODEPARAM(getNickname(client_fd), chan.getName(), modes[i], "Modes needs to start with - or +"));
 					break;
 				}
 				if (modes[i] == '+' || modes[i] == '-')
@@ -136,7 +132,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 								sendToClient(client_fd, MODE(_clients[client_fd].getNickname(), chan.getName(), "+k", key));
 							}
 							else
-								sendToClient(client_fd, ERR_NEEDMOREPARAMS("MODE +k"));
+								sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "MODE +k"));
 						}
 						else
 						{
@@ -158,20 +154,18 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 								int nb = strtol(nbUser.c_str(), &end, 10);
 								if (nb <= 0 || *end != '\0')
 								{
-									sendToClient(client_fd, ERR_INVALIDMODEPARAM(chan.getName(), "+l", "Needs to be a number and greater than 0"));
+									sendToClient(client_fd, ERR_INVALIDMODEPARAM(getNickname(client_fd), chan.getName(), "+l", "Needs to be a number and greater than 0"));
 									break;
 								}
-								chan.setLimitUser(add);
 								chan.setUserLimit(nb);
 								broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "+l",
 																			to_string(nb)), -1);
 							}
 							else
-								sendToClient(client_fd, ERR_NEEDMOREPARAMS("MODE +l"));
+								sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "MODE +l"));
 						}
 						else
 						{
-							chan.setLimitUser(add);
 							chan.setUserLimit(0);
 							broadcastToChannel(chan.getName(), MODE(_clients[client_fd].getNickname(), chan.getName(), "-l", ""), -1);
 						}
@@ -184,18 +178,18 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 							iss >> opUser;
 						if (opUser.empty())
 						{
-							sendToClient(client_fd, ERR_NEEDMOREPARAMS("MODE +o"));
+							sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "MODE +o"));
 							break;
 						}
 						int fd = getFdByNickname(opUser);
 						if (fd < 0)
 						{
-							sendToClient(client_fd, ERR_NOSUCHNICK(opUser));
+							sendToClient(client_fd, ERR_NOSUCHNICK(getNickname(client_fd), opUser));
 							break;
 						}
 						if (!chan.isMember(fd))
 						{
-							sendToClient(client_fd, ERR_USERNOTINCHANNEL(opUser, chan.getName()));
+							sendToClient(client_fd, ERR_USERNOTINCHANNEL(getNickname(client_fd), opUser, chan.getName()));
 							break;
 						}
 						if (add)
@@ -212,7 +206,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 					}
 					default:
 					{
-						sendToClient(client_fd, ERR_UMODEUNKNOWNFLAG(to_string(modes[i])));
+						sendToClient(client_fd, ERR_UMODEUNKNOWNFLAG(getNickname(client_fd), to_string(modes[i])));
 						break;
 					}
 				}

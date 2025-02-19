@@ -13,34 +13,33 @@
 #include "Server.hpp"
 
 bool Server::topic(std::istringstream &iss, int client_fd) {
-	//si le topic nest pas locked
 	std::string name_channel;
 	iss >> name_channel;
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		sendToClient(client_fd, ERR_NOTREGISTERED);
+		sendToClient(client_fd, ERR_NOTREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 
 	if (name_channel.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("TOPIC"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "TOPIC"));
 		return true;
 	}
 	if (_channels.find(name_channel) == _channels.end())
 	{
-		sendToClient(client_fd, ERR_NOSUCHCHANNEL(name_channel));
+		sendToClient(client_fd, ERR_NOSUCHCHANNEL(getNickname(client_fd), name_channel));
 		return true;
 	}
 	if (!_channels[name_channel].isMember(client_fd))
 	{
-		sendToClient(client_fd, ERR_NOTONCHANNEL(name_channel));
+		sendToClient(client_fd, ERR_NOTONCHANNEL(getNickname(client_fd), name_channel));
 		return true;
 	}
-	if (_channels[name_channel].getTopicLocked() && !_channels[name_channel].isOperator(client_fd))
+	if (_channels[name_channel].isTopicLocked() && !_channels[name_channel].isOperator(client_fd))
 	{
-		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(name_channel));
+		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(getNickname(client_fd), name_channel));
 		return true;
 	}
 	std::string topic;
@@ -50,12 +49,9 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 	{
 		std::string actualTopic = _channels[name_channel].getTopic();
 		if (actualTopic.empty())
-			sendToClient(client_fd, RPL_NOTOPIC(name_channel));
+			sendToClient(client_fd, RPL_NOTOPIC(getNickname(client_fd), name_channel));
 		else
-		{
-			std::cout << RPL_TOPIC(name_channel, actualTopic) << std::endl;
-			sendToClient(client_fd, RPL_TOPIC(name_channel, actualTopic));
-		}
+			sendToClient(client_fd, RPL_TOPIC(getNickname(client_fd), name_channel, actualTopic));
 		return true;
 	}
 
@@ -68,9 +64,9 @@ bool Server::topic(std::istringstream &iss, int client_fd) {
 			{
 				std::string actualTopic = _channels[name_channel].getTopic();
 				if (actualTopic.empty())
-					sendToClient(client_fd, RPL_NOTOPIC(name_channel));
+					sendToClient(client_fd, RPL_NOTOPIC(getNickname(client_fd), name_channel));
 				else
-					sendToClient(client_fd, RPL_TOPIC(name_channel, actualTopic));
+					sendToClient(client_fd, RPL_TOPIC(getNickname(client_fd), name_channel, actualTopic));
 				return true;
 			}
 			else

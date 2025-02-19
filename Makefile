@@ -1,5 +1,5 @@
 # Variables de base
-NAME := IRC
+NAME := ircserv
 SRC_DIR := src
 CMDS_DIR := $(SRC_DIR)/commands
 BONUS_DIR := $(SRC_DIR)/bonus
@@ -50,7 +50,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 # Règle de linkage
 $(NAME): $(OBJS)
-	$(CC) $(OBJS) -o $(NAME)
+	$(CC) $(OBJS) -lcrypt -o $(NAME)
 
 # Inclusion des fichiers de dépendances
 -include $(DEPS)

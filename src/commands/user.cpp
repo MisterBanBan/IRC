@@ -6,7 +6,7 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:28:08 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 17:35:32 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,31 +18,43 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 	iss >> user;
 	if (user.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("USER"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "USER"));
 		return true;
 	}
 	if (_clients[client_fd].isAuthenticated() || !_clients[client_fd].getUsername().empty())
 	{
-		sendToClient(client_fd, ERR_ALREADYREGISTERED);
+		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 
 	std::getline(iss, realname);
-	if (!realname.empty())
+
+	std::vector<std::string>	args	=	split(realname, ' ');
+
+	if (args.size() < 3)
 	{
-		while (!realname.empty() && (realname[0] == ' ' || realname[0] == ':'))
-		{
-			if (realname[0] == ':')
-			{
-				realname.erase(0, 1);
-				if (!realname.empty())
-					_clients[client_fd].setRealname(realname);
-			}
-			realname.erase(0, 1);
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "USER"));
+		return true;
+	}
+
+	for (size_t i = 0; i < 3; i++) {
+		if ((i == 0 && args[i] != "0") || (i == 1 && args[i] != "*") || (i == 2 && args[i][0] != ':')) {
+			sendToClient(client_fd, ERR_UNKNOWNCOMMAND(getNickname(client_fd), "USER " + realname));
+			authenticate(client_fd);
+			return false;
 		}
 	}
-	else
+
+	realname.clear();
+	args[2].erase(0, 1);
+	for (size_t i = 2; i < args.size(); i++)
+		realname += args[i] + " ";
+	realname.erase(realname.size() - 1, 1);
+
+	if (realname.empty())
 		_clients[client_fd].setRealname("Unknown");
+	else
+		_clients[client_fd].setRealname(realname);
 
 	_clients[client_fd].setUsername(user);
 

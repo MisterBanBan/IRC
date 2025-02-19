@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/28 15:14:33 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/05 09:57:56 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/12 10:22:37 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 {
     if (argc != 3)
     {
-        std::cout << "Usage: ./ircserv <6667> <PASSWORD>" << std::endl;
+        std::cout << "Usage: ./ircserv <port> <password>" << std::endl;
         return 1;
     }
     std::string port = argv[1];

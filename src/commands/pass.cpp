@@ -17,17 +17,17 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 	iss >> pass;
 	if (pass.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("PASS"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "PASS"));
 		return true;
 	}
 	if (_clients[client_fd].isAuthenticated() || _clients[client_fd].getRightPass())
 	{
-		sendToClient(client_fd, "462 PASS :You may not reregister\r\n");
+		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
 		return true;
 	}
 	if (!isCorrectPasswordServer(pass))
 	{
-		sendToClient(client_fd, ERR_PASSWDMISMATCH);
+		sendToClient(client_fd, ERR_PASSWDMISMATCH(getNickname(client_fd)));
 		removeClient(client_fd);
 		return false;
 	}

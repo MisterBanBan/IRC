@@ -6,12 +6,11 @@
 /*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/05 17:48:21 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/07 18:09:58 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
-// quand un client se co rajouter sil y a un topic le sujet du topic
 
 bool Server::join(std::istringstream &iss, int client_fd)
 {
@@ -20,15 +19,25 @@ bool Server::join(std::istringstream &iss, int client_fd)
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		sendToClient(client_fd, ERR_ALREADYREGISTERED);
+		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 	if (channel_str.empty())
 	{
-		sendToClient(client_fd, ERR_NEEDMOREPARAMS("JOIN"));
+		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "JOIN"));
 		return false;
 	}
 	std::vector<std::string> channels = split(channel_str, ',');
+
+	if (channels.size() == 1 && channels[0] == "0")
+	{
+		for (std::set<std::string>::iterator it = _clients[client_fd].getChannels().begin(); it != _clients[client_fd].getChannels().end(); it++) {
+			broadcastToChannel(*it, PART(_clients[client_fd].getNickname(), *it, ":Leaving"), -1);
+			leaveChannel(channel_str, client_fd);
+		}
+		return true;
+	}
+
 	std::string keys_str;
 	iss >> keys_str;
 	std::vector<std::string> keys;
@@ -53,27 +62,27 @@ bool Server::join(std::istringstream &iss, int client_fd)
 		}
 		else
 		{
-			if (_channels[channel_name].getLimitUser() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
+			if (_channels[channel_name].hasUserLimit() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
 			{
-				sendToClient(client_fd, ERR_CHANNELISFULL(channel_name));
+				sendToClient(client_fd, ERR_CHANNELISFULL(getNickname(client_fd), channel_name));
 				return true;
 			}
 
-			if (_channels[channel_name].getHasKey())
+			if (_channels[channel_name].hasKey())
 			{
                 std::string provided_key = (i < keys.size()) ? keys[i] : "";
-                if (_channels[channel_name].getKey() != provided_key) {
-					sendToClient(client_fd, ERR_BADCHANNELKEY(channel_name));
+                if (!_channels[channel_name].isValidKey(provided_key)) {
+					sendToClient(client_fd, ERR_BADCHANNELKEY(getNickname(client_fd), channel_name));
                     continue;
                 }
             }
-            if (!_channels[channel_name].getInviteOnly())
+            if (!_channels[channel_name].isInviteOnly())
                 _channels[channel_name].addMember(client_fd);
             else
 			{
                 if (!_channels[channel_name].isInvited(client_fd))
 				{
-                    sendToClient(client_fd, ERR_INVITEONLYCHAN(channel_name));
+                    sendToClient(client_fd, ERR_INVITEONLYCHAN(getNickname(client_fd), channel_name));
                     continue;
                 }
                 _channels[channel_name].addMember(client_fd);
@@ -86,7 +95,7 @@ bool Server::join(std::istringstream &iss, int client_fd)
 
 		sendToClient(client_fd, JOIN(getNickname(client_fd), channel_name));
 		if (!chan.getTopic().empty())
-			sendToClient(client_fd, RPL_TOPIC(channel_name, chan.getTopic()));
+			sendToClient(client_fd, RPL_TOPIC(getNickname(client_fd), channel_name, chan.getTopic()));
 
 		std::stringstream users;
 
@@ -95,12 +104,13 @@ bool Server::join(std::istringstream &iss, int client_fd)
 		{
 			if (it != members.begin())
 				users << " ";
+			if (chan.isOperator(*it))
+				users << "@";
 			users << getNickname(*it);
 		}
 
-		std::cout << chan.getName() << std::endl;
 		sendToClient(client_fd, RPL_NAMREPLY(getNickname(client_fd), channel_name, users.str()));
-		sendToClient(client_fd, RPL_ENDOFNAMES(channel_name));
+		sendToClient(client_fd, RPL_ENDOFNAMES(getNickname(client_fd), channel_name));
 	}
 	return true;
 }

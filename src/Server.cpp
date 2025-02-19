@@ -6,14 +6,14 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/12 13:03:41 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/17 13:25:26 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include "Client.hpp"
 #include <arpa/inet.h>
-#include <sstream>
+#include <crypt.h>
 
 Server::Server(void) : _running(true) { }
 
@@ -30,25 +30,28 @@ void Server::stop()
 
 int	Server::initServerSocket(const std::string & port, const std::string & pass)
 {
-    if (port != "6667")
-    {
-        std::cout << "<port> is 6667" << std::endl;
-        return 1;
-    }
 	char *end;
+
+	if (port.size() != 4)
+	{
+		std::cout << "Error: Port needs to contain 4 numbers" << std::endl;
+		return 1;
+	}
+
     int portInt = strtol(port.c_str(), &end, 10);
     if (*end != '\0')
     {
-        std::cout << "Error: Convert port failed" << std::endl;
+        std::cout << "Error: Port is invalid" << std::endl;
         return 1;
     }
+
     if (pass.empty())
     {
         std::cout << "Error: Password is empty" << std::endl;
         return 1;
     }
-    else
-        this->_serverPassword = pass;
+
+	this->_serverHashPassword = crypt(pass.c_str(), "$6$RNEuivJ08k");
     //It creates a socket using the protocol IPV4 and a socket orient connexion SOCK_STREAM
     //Concretely, socket() returns a file descriptor (an integer) which identifies this new socket
     //listen on one port
@@ -102,14 +105,8 @@ int	Server::initServerSocket(const std::string & port, const std::string & pass)
         std::cout << "Error: listen failed" << std::endl;
         return 1;
     }
-    int flags = fcntl(_server_fd, F_GETFL, 0); // retrieve the flags of the socket 
-    if (flags < 0)
-    {
-        std::cout << "Error: F_GETFL failed" << std::endl;
-        return 1;
-    }
     // manage multiple connections without blocking
-    if (fcntl(_server_fd, F_SETFL, flags | O_NONBLOCK) < 0) // F_SETFL define a new flags for the socket activate noBLOCK
+    if (fcntl(_server_fd, F_SETFL, O_NONBLOCK) < 0) // F_SETFL define a new flags for the socket activate noBLOCK
     {
         std::cout << "Error: F_SETFL failed" << std::endl;
         return 1;
@@ -138,14 +135,7 @@ void Server::acceptNewClient()
         }
         return;
     }
-    int flags = fcntl(client_fd, F_GETFL, 0);
-    if (flags < 0)
-    {
-        std::cout << "Error: F_GETFL failed" << std::endl;
-        close(client_fd);
-        return;
-    }
-    if (fcntl(client_fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
     {
         std::cout << "Error: F_SETFL failed" << std::endl;
         return;
@@ -164,18 +154,18 @@ void Server::acceptNewClient()
 
 }
 
-
 void Server::run()
 {
     std::cout << "Server is running" << std::endl;
+
     while (_running)
     {
         //The poll() function monitors a set of file descriptors for events
         //_poll_fds.data() to the first element of the _poll_fds vector, which contains the pollfd structures describing the file descriptors to monitor
         int ret = poll(_poll_fds.data(), _poll_fds.size(), -1); // Timeout infini if ret < 0 error
-        if(ret < 0)
+        if (ret < 0 && _running)
         {
-            std::cout << "Error: poll failde" << std::endl;
+            std::cout << "Error: poll failed" << std::endl;
             break;
         }
         for (size_t i = 0; i < _poll_fds.size();)
@@ -326,7 +316,7 @@ void Server::clientData(int client_fd)
             return;
         }
         else
-            sendToClient(client_fd, ERR_UNKNOWNCOMMAND(cmd));
+            sendToClient(client_fd, ERR_UNKNOWNCOMMAND(getNickname(client_fd), cmd));
     }
 }
 
@@ -381,7 +371,7 @@ void Server::sendPrivateMessage(int client_fd, const std::string &target, const 
 
 bool Server::isCorrectPasswordServer(const std::string &pass)
 {
-    if (pass == this->_serverPassword)
+    if (crypt(pass.c_str(), "$6$RNEuivJ08k") == this->_serverHashPassword)
         return true;
     return false;
 }
@@ -413,6 +403,20 @@ std::string Server::getNickname(int clientFd) const
     if (it == _clients.end())
         return "";
     return it->second.getNickname();
+}
+
+std::string Server::getUsername(int clientFd) const {
+	std::map<int, Client>::const_iterator it = _clients.find(clientFd);
+	if (it == _clients.end())
+		return "";
+	return it->second.getUsername();
+}
+
+std::string Server::getRealname(int clientFd) const {
+	std::map<int, Client>::const_iterator it = _clients.find(clientFd);
+	if (it == _clients.end())
+		return "";
+	return it->second.getRealname();
 }
 
 void Server::sendToClient(int client_fd, const std::string &response)
@@ -515,10 +519,30 @@ void Server::authenticate(int client_fd) {
 	else
 	{
 		if (!client.getRightPass())
-			sendToClient(client_fd, "Need a password to be fully authenticated (/PASS <password>)\r\n");
+			sendToClient(client_fd, "Need a password to be fully authenticated (PASS <password>)\r\n");
 		if (client.getUsername().empty())
-			sendToClient(client_fd, "Need an username to be fully authenticated (/USER <username> 0 * <realname>)\r\n");
+			sendToClient(client_fd, "Need an username to be fully authenticated (USER <username> 0 * :<realname>)\r\n");
 		if (client.getNickname().empty())
-			sendToClient(client_fd, "Need a nickname to be fully authenticated (/NICK <nickname>)\r\n");
+			sendToClient(client_fd, "Need a nickname to be fully authenticated (NICK <nickname>)\r\n");
 	}
+}
+
+void Server::leaveChannel(const std::string &channel_name, int client_fd) {
+	_channels[channel_name].removeMember(client_fd);
+	_clients[client_fd].getChannels().erase(channel_name);
+	if (_channels[channel_name].getMembers().empty())
+		_channels.erase(channel_name);
+}
+
+std::vector <std::string> Server::split(const std::string &s, char delimiter)
+{
+	std::vector<std::string> tokens;
+	std::istringstream iss(s);
+	std::string token;
+	while (std::getline(iss, token, delimiter))
+	{
+		if (!token.empty())
+			tokens.push_back(token);
+	}
+	return tokens;
 }

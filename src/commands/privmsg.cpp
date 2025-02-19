@@ -18,13 +18,13 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
-		sendToClient(client_fd, ERR_ALREADYREGISTERED);
+		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
 		return false;
 	}
 
 	if (target.empty())
 	{
-		sendToClient(client_fd, ERR_NORECIPIENT);
+		sendToClient(client_fd, ERR_NORECIPIENT(getNickname(client_fd)));
 		return false;
 	}
 
@@ -46,13 +46,13 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 	{
 		if (_channels.find(target) == _channels.end())
 		{
-			sendToClient(client_fd, ERR_NOSUCHCHANNEL(target));
+			sendToClient(client_fd, ERR_NOSUCHCHANNEL(getNickname(client_fd), target));
 			return true;
 		}
 
 		if (!_channels[target].isMember(client_fd))
 		{
-			sendToClient(client_fd, ERR_NOTONCHANNEL(target));
+			sendToClient(client_fd, ERR_NOTONCHANNEL(getNickname(client_fd), target));
 			return true;
 		}
 
@@ -64,7 +64,7 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 			{
 				if (msg.empty())
 				{
-					sendToClient(client_fd, ERR_NOTEXTTOSEND);
+					sendToClient(client_fd, ERR_NOTEXTTOSEND(getNickname(client_fd)));
 					return true;
 				}
 				std::stringstream response;
@@ -74,13 +74,13 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 			}
 			msg.erase(0, 1);
 		}
-		sendToClient(client_fd, ERR_NOTEXTTOSEND);
+		sendToClient(client_fd, ERR_NOTEXTTOSEND(getNickname(client_fd)));
 		return true;
 	}
 	int targetFd = getFdByNickname(target);
 	if (targetFd < 0)
 	{
-		sendToClient(client_fd, ERR_NOSUCHNICK(target));
+		sendToClient(client_fd, ERR_NOSUCHNICK(getNickname(client_fd), target));
 		return true;
 	}
 	std::string msg;
@@ -92,7 +92,7 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 			msg.erase(0, 1);
 			if (msg.empty())
 			{
-				sendToClient(client_fd, ERR_NOTEXTTOSEND);
+				sendToClient(client_fd, ERR_NOTEXTTOSEND(getNickname(client_fd)));
 				return true;
 			}
 			sendPrivateMessage(client_fd, target, msg);
@@ -100,6 +100,6 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 		}
 		msg.erase(0, 1);
 	}
-	sendToClient(client_fd, ERR_NOTEXTTOSEND);
+	sendToClient(client_fd, ERR_NOTEXTTOSEND(getNickname(client_fd)));
 	return true;
 }

@@ -31,6 +31,7 @@
 
 
 
+
 class Server
 {
     public:
@@ -43,6 +44,8 @@ class Server
         void	removeClient(int client_fd);
         int		getFdByNickname(const std::string & target);
         std::string getNickname(int clientFd) const;
+		std::string getUsername(int clientFd) const;
+		std::string getRealname(int clientFd) const;
         void	broadcastToChannel(const std::string &channel_name, const std::string &message, int to_ignore);
         void	sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
         bool	isCorrectPasswordServer(const std::string &pass);
@@ -50,6 +53,7 @@ class Server
         void	handleWriteEvent(int client_fd);
         void	disableWriteEvent(int client_fd);
 		void	authenticate(int client_fd);
+		void	leaveChannel(const std::string & channel_name, int client_fd);
 
 		bool	nick(std::istringstream & iss, int client_fd);
 		bool	user(std::istringstream & iss, int client_fd);
@@ -66,18 +70,7 @@ class Server
         bool    quit(std::istringstream &iss, int client_fd);
         void    processBotMessage(int client_fd, std::string &msg);
         void    stop();
-        std::vector<std::string> split(const std::string &s, char delimiter)
-        {
-            std::vector<std::string> tokens;
-            std::istringstream iss(s);
-            std::string token;
-            while (std::getline(iss, token, delimiter))
-            {
-                if (!token.empty())
-                    tokens.push_back(token);
-            }
-            return tokens;
-        }
+        std::vector<std::string> split(const std::string &s, char delimiter);
         void run();
         ~Server(void);
         Server &operator=(const Server &other);
@@ -88,7 +81,7 @@ class Server
         std::map<std::string, Channel> _channels;
         std::map<int, Client> _clients;
         std::map<int, ChessBot> _ChessTable;
-        std::string _serverPassword;
+        std::string _serverHashPassword;
 };
 
 
