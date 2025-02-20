@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/20 13:32:37 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 13:37:51 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -245,46 +245,6 @@ void Server::clientData(int client_fd)
             quit(iss, client_fd);
         else
             sendToClient(client_fd, ERR_UNKNOWNCOMMAND(getNickname(client_fd), cmd));
-    }
-}
-
-void Server::sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg)
-{
-    if (target[0] == '#')
-    {
-        if (_channels.find(target) == _channels.end())
-        {
-            sendToClient(client_fd, "403 " + target + " :No such channel\r\n");
-            return;
-        }
-        if (!_channels[target].isMember(client_fd))
-        {
-            sendToClient(client_fd, "442 " + target + " :You're not on that channel\r\n");
-            return;
-        }
-        std::string nick_sender = getNickname(client_fd);
-        std::string msg_formatted = ":" + nick_sender + " PRIVMSG " + target + " : " + msg + "\r\n";
-
-        for (std::set<int>::iterator it = _channels[target].getMembers().begin(); it != _channels[target].getMembers().end(); ++it)
-        {
-            int member_fd = *it;
-            if (member_fd != client_fd)
-                sendToClient(member_fd, msg_formatted);
-        }
-        return ;
-    }
-    else
-    {
-        int target_fd = getFdByNickname(target);
-        if (target_fd < 0)
-        {
-            sendToClient(client_fd, "401 " + target + " :No such nick\r\n");
-            return;
-        }
-        std::string nick_sender = getNickname(client_fd);
-        std::string msg_formatted = ":" + nick_sender + " PRIVMSG " + target + " : " + msg + "\r\n";
-        sendToClient(target_fd, msg_formatted);
-        return;
     }
 }
 
