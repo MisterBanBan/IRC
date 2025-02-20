@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/29 09:14:22 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 11:27:53 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 13:18:31 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,9 +26,10 @@ class Channel
         ~Channel(void);
         Channel &operator=(const Channel &other);
 
-        void addMember(int fd);
-        void removeMember(int fd);
-		void inviteUser(int fd);
+        void	addMember(int fd);
+        void	removeMember(int fd);
+		void	inviteUser(int fd);
+		int		getNbMembers();
 
         bool isMember(int fd) const;
         bool isInvited(int fd) const;
@@ -53,6 +54,9 @@ class Channel
 		void setUserLimit(int limit);
 		void setKey(const std::string & key);
 		void setTopic(const std::string &topic);
+
+		void	broadcast(const std::string &message, int to_ignore);
+		void	leave(int client_fd);
         
     private:
         std::string _name;

@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/20 10:37:33 by afavier          ###   ########.fr       */
+/*   Updated: 2025/02/20 13:23:00 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,11 +22,27 @@ Server::Server(const Server &other)
     *this = other;
 }
 
+Server::~Server(void)
+{
+	for (size_t i = 0; i < _poll_fds.size(); ++i)
+		close(_poll_fds[i].fd);
+}
+
+Server &Server::operator=(const Server &other)
+{
+	if (this != &other)
+	{
+		_server_fd = other._server_fd;
+		_poll_fds = other._poll_fds;
+		_clients = other._clients;
+	}
+	return(*this);
+}
+
 void Server::stop()
 {
     _running = false;
 }
-
 
 int	Server::initServerSocket(const std::string & port, const std::string & pass)
 {
@@ -232,15 +248,6 @@ void Server::clientData(int client_fd)
     }
 }
 
-int Server::getNbUser(int clients_fd, const std::string &channel)
-{
-    int i = 0;
-	(void)clients_fd;
-    for (std::set<int>::iterator it = _channels[channel].getMembers().begin(); it != _channels[channel].getMembers().end(); ++it)
-        i++;
-    return i;
-}
-
 void Server::sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg)
 {
     if (target[0] == '#')
@@ -395,23 +402,6 @@ void Server::removeClient(int client_fd)
         }
     }
     std::cout << "Client : " << client_fd << " Remove" << std::endl;
-}
-
-Server::~Server(void)
-{
-    for (size_t i = 0; i < _poll_fds.size(); ++i)
-        close(_poll_fds[i].fd);
-}
-
-Server &Server::operator=(const Server &other)
-{
-    if (this != &other)
-    {
-        _server_fd = other._server_fd;
-        _poll_fds = other._poll_fds;
-        _clients = other._clients;
-    }
-    return(*this);
 }
 
 void Server::authenticate(int client_fd) {

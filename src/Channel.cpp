@@ -6,7 +6,7 @@
 /*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/29 09:14:22 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 11:30:09 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 13:20:50 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,13 @@ void Channel::removeMember(int fd)
 void Channel::inviteUser(int fd)
 {
 	this->_inviteUser.insert(fd);
+}
+
+int Channel::getNbMembers() {
+	int i = 0;
+	for (std::set<int>::iterator it = _members.begin(); it != _members.end(); ++it)
+		i++;
+	return i;
 }
 
 bool Channel::isMember(int fd) const

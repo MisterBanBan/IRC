@@ -6,7 +6,7 @@
 /*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/04 10:23:38 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/17 19:20:42 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/19 13:39:17 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ void Server::processBotMessage(int client_fd, std::string &msg)
         std::string response = ":Bot PRIVMSG " + getNickname(client_fd) + " :\n";
 		this->_ChessTable[client_fd].MakeAPlayerMove(msg);
         this->_ChessTable[client_fd].MovePiece(msg);
-        this->_ChessTable[client_fd].PrintBoard(response);
         this->_ChessTable[client_fd].ParseBotMove(this->_ChessTable[client_fd].MakeABotMove(), response);
         this->_ChessTable[client_fd].PrintBoard(response);
         sendToClient(client_fd, response);

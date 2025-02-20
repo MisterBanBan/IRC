@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/20 10:40:17 by afavier          ###   ########.fr       */
+/*   Updated: 2025/02/20 11:18:07 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ void Server::join(std::istringstream &iss, int client_fd)
 		}
 		else
 		{
-			if (_channels[channel_name].hasUserLimit() && _channels[channel_name].getUserLimit() == getNbUser(client_fd, channel_name))
+			if (_channels[channel_name].hasUserLimit() && _channels[channel_name].getUserLimit() == _channels[channel_name].getNbMembers())
 			{
 				sendToClient(client_fd, ERR_CHANNELISFULL(getNickname(client_fd), channel_name));
 				return;
