@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:13 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/20 11:18:07 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 13:27:32 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,30 +62,31 @@ void Server::join(std::istringstream &iss, int client_fd)
 		}
 		else
 		{
-			if (_channels[channel_name].hasUserLimit() && _channels[channel_name].getUserLimit() == _channels[channel_name].getNbMembers())
+			Channel &chan = _channels[channel_name];
+			if (chan.hasUserLimit() && chan.getUserLimit() == chan.getNbMembers())
 			{
 				sendToClient(client_fd, ERR_CHANNELISFULL(getNickname(client_fd), channel_name));
 				return;
 			}
 
-			if (_channels[channel_name].hasKey())
+			if (chan.hasKey())
 			{
                 std::string provided_key = (i < keys.size()) ? keys[i] : "";
-                if (!_channels[channel_name].isValidKey(provided_key)) {
+                if (!chan.isValidKey(provided_key)) {
 					sendToClient(client_fd, ERR_BADCHANNELKEY(getNickname(client_fd), channel_name));
                     continue;
                 }
             }
-            if (!_channels[channel_name].isInviteOnly())
-                _channels[channel_name].addMember(client_fd);
+            if (!chan.isInviteOnly())
+				chan.addMember(client_fd);
             else
 			{
-                if (!_channels[channel_name].isInvited(client_fd))
+                if (!chan.isInvited(client_fd))
 				{
                     sendToClient(client_fd, ERR_INVITEONLYCHAN(getNickname(client_fd), channel_name));
                     continue;
                 }
-                _channels[channel_name].addMember(client_fd);
+				chan.addMember(client_fd);
             }
         }
 

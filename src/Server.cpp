@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/20 13:23:00 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 13:32:37 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -237,7 +237,7 @@ void Server::clientData(int client_fd)
             invite(iss, client_fd);
         else if (cmd == "MODE")
             mode(iss, client_fd);
-        if (cmd == "CAP")
+        else if (cmd == "CAP")
             cap(iss, client_fd);
         else if (cmd == "WHO")
             who(iss, client_fd);

@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:59 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/20 10:45:27 by afavier          ###   ########.fr       */
+/*   Updated: 2025/02/20 13:30:53 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,12 +32,14 @@ void Server::topic(std::istringstream &iss, int client_fd) {
 		sendToClient(client_fd, ERR_NOSUCHCHANNEL(getNickname(client_fd), name_channel));
 		return;
 	}
-	if (!_channels[name_channel].isMember(client_fd))
+
+	Channel &chan = _channels[name_channel];
+	if (!chan.isMember(client_fd))
 	{
 		sendToClient(client_fd, ERR_NOTONCHANNEL(getNickname(client_fd), name_channel));
 		return;
 	}
-	if (_channels[name_channel].isTopicLocked() && !_channels[name_channel].isOperator(client_fd))
+	if (chan.isTopicLocked() && !chan.isOperator(client_fd))
 	{
 		sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(getNickname(client_fd), name_channel));
 		return;
