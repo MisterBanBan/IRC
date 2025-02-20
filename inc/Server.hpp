@@ -44,8 +44,6 @@ public:
 	void	sendToClient(int client_fd, const std::string &response);
 	void	clientData(int client_fd);
 
-	void	sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
-
 	void	broadcastToChannel(const std::string &channel_name, const std::string &message, int to_ignore);
 	bool	isCorrectPasswordServer(const std::string &pass);
 	void	handleWriteEvent(int client_fd);
@@ -73,6 +71,8 @@ public:
 	void	quit(std::istringstream &iss, int client_fd);
 	void	processBotMessage(int client_fd, std::string &msg);
 	void	stop();
+
+	void	sendPrivateMessage(int client_fd, const std::string &target, const std::string &msg);
 
 	std::vector<std::string> split(const std::string &s, char delimiter);
 

@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/20 13:37:51 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 15:11:24 by mbaron-t         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,6 +107,42 @@ int	Server::initServerSocket(const std::string & port, const std::string & pass)
 	return 0;
 }
 
+void Server::run()
+{
+	std::cout << "Server is running" << std::endl;
+
+	while (_running)
+	{
+		int ret = poll(_poll_fds.data(), _poll_fds.size(), -1);
+		if (ret < 0 && _running)
+		{
+			std::cout << "Error: poll failed" << std::endl;
+			break;
+		}
+		for (size_t i = 0; i < _poll_fds.size();)
+		{
+			int fd = _poll_fds[i].fd;
+			short revents = _poll_fds[i].revents;
+			if (revents & (POLLERR | POLLHUP | POLLNVAL))
+			{
+				removeClient(fd);
+				continue;
+			}
+			if (revents & POLLIN)
+			{
+				if (fd == _server_fd)
+					acceptNewClient();
+				else
+					clientData(fd);
+			}
+			if (revents & POLLOUT)
+				handleWriteEvent(fd);
+			++i;
+		}
+	}
+	close(_server_fd);
+}
+
 void Server::acceptNewClient()
 {
     struct sockaddr_in client_addr;
@@ -136,43 +172,35 @@ void Server::acceptNewClient()
 
     std::cout << "New connexion accepted. FD = " << client_fd << std::endl;
 	authenticate(client_fd);
-
 }
 
-void Server::run()
+void Server::removeClient(int client_fd)
 {
-    std::cout << "Server is running" << std::endl;
+	close(client_fd);
+	_clients.erase(client_fd);
 
-    while (_running)
-    {
-        int ret = poll(_poll_fds.data(), _poll_fds.size(), -1);
-        if (ret < 0 && _running)
-        {
-            std::cout << "Error: poll failed" << std::endl;
-            break;
-        }
-        for (size_t i = 0; i < _poll_fds.size();)
-        {
-            int fd = _poll_fds[i].fd;
-            short revents = _poll_fds[i].revents;
-            if (revents & (POLLERR | POLLHUP | POLLNVAL))
-            {
-                removeClient(fd);
-                continue;
-            }
-            if (revents & POLLIN)
-            {
-                if (fd == _server_fd)
-                    acceptNewClient();
-                else 
-                    clientData(fd);
-            }
-            if (revents & POLLOUT)
-                handleWriteEvent(fd);
-            ++i;
-        }
-    }
-    close(_server_fd);
+	for (std::vector<struct pollfd>::iterator it = _poll_fds.begin(); it != _poll_fds.end(); ++it)
+	{
+		if (it->fd == client_fd)
+		{
+			_poll_fds.erase(it);
+			break;
+		}
+	}
+	std::cout << "Client : " << client_fd << " Remove" << std::endl;
+}
+
+void Server::sendToClient(int client_fd, const std::string &response)
+{
+	_clients[client_fd].getBufferOut() += response;
+	for (size_t i = 0; i < _poll_fds.size(); ++i)
+	{
+		if (_poll_fds[i].fd == client_fd)
+		{
+			_poll_fds[i].events |= POLLOUT;
+			break;
+		}
+	}
 }
 
 void Server::clientData(int client_fd)
@@ -248,6 +276,17 @@ void Server::clientData(int client_fd)
     }
 }
 
+void Server::broadcastToChannel(const std::string &channel_name, const std::string &message, int to_ignore)
+{
+	if(_channels.find(channel_name) == _channels.end())
+		return ;
+
+	std::set<int> members = _channels[channel_name].getMembers();
+	for (std::set<int>::iterator it = members.begin(); it != members.end(); ++it)
+		if (*it != to_ignore)
+			sendToClient(*it, message);
+}
+
 bool Server::isCorrectPasswordServer(const std::string &pass)
 {
     if (crypt(pass.c_str(), "$6$RNEuivJ08k") == this->_serverHashPassword)
@@ -255,15 +294,67 @@ bool Server::isCorrectPasswordServer(const std::string &pass)
     return false;
 }
 
-void Server::broadcastToChannel(const std::string &channel_name, const std::string &message, int to_ignore)
+void Server::handleWriteEvent(int client_fd)
 {
-    if(_channels.find(channel_name) == _channels.end())
-        return ;
+	Client &client = _clients[client_fd];
+	if (client.getBufferOut().empty())
+	{
+		disableWriteEvent(client_fd);
+		return;
+	}
+	ssize_t bytes_sent = send(client_fd, client.getBufferOut().c_str(), client.getBufferOut().size(), 0);
+	if (bytes_sent > 0)
+	{
+		client.getBufferOut().erase(0, bytes_sent);
+		if (client.getBufferOut().empty())
+			disableWriteEvent(client_fd);
+	}
+	else if (bytes_sent == -1)
+	{
+		if (errno != EAGAIN && errno != EWOULDBLOCK)
+		{
+			std::cerr << "Error: send failed to FD " << client_fd << " (" << strerror(errno) << ")" << std::endl;
+			removeClient(client_fd);
+		}
+	}
+}
 
-    std::set<int> members = _channels[channel_name].getMembers();
-    for (std::set<int>::iterator it = members.begin(); it != members.end(); ++it)
-		if (*it != to_ignore)
-        	sendToClient(*it, message);
+void Server::disableWriteEvent(int clients_fd)
+{
+	for (size_t i = 0; i < _poll_fds.size(); ++i)
+	{
+		if (_poll_fds[i].fd == clients_fd)
+		{
+			_poll_fds[i].events &= ~POLLOUT;
+			break;
+		}
+	}
+}
+
+void Server::authenticate(int client_fd) {
+	Client &client = _clients[client_fd];
+
+	if (client.getRightPass() && !client.getUsername().empty() && !client.getNickname().empty())
+	{
+		client.setAuthenticated(true);
+		sendToClient(client_fd, RPL_WELCOME(client.getNickname()));
+	}
+	else
+	{
+		if (!client.getRightPass())
+			sendToClient(client_fd, "Need a password to be fully authenticated (PASS <password>)\r\n");
+		if (client.getUsername().empty())
+			sendToClient(client_fd, "Need an username to be fully authenticated (USER <username> 0 * :<realname>)\r\n");
+		if (client.getNickname().empty())
+			sendToClient(client_fd, "Need a nickname to be fully authenticated (NICK <nickname>)\r\n");
+	}
+}
+
+void Server::leaveChannel(const std::string &channel_name, int client_fd) {
+	_channels[channel_name].removeMember(client_fd);
+	_clients[client_fd].getChannels().erase(channel_name);
+	if (_channels[channel_name].getMembers().empty())
+		_channels.erase(channel_name);
 }
 
 int Server::getFdByNickname(const std::string & target)
@@ -296,98 +387,6 @@ std::string Server::getRealname(int clientFd) const {
 	if (it == _clients.end())
 		return "";
 	return it->second.getRealname();
-}
-
-void Server::sendToClient(int client_fd, const std::string &response)
-{
-    _clients[client_fd].getBufferOut() += response;
-    for (size_t i = 0; i < _poll_fds.size(); ++i)
-    {
-        if (_poll_fds[i].fd == client_fd)
-        {
-            _poll_fds[i].events |= POLLOUT;
-            break;
-        }
-    }
-}
-
-void Server::handleWriteEvent(int client_fd)
-{
-    Client &client = _clients[client_fd];
-    if (client.getBufferOut().empty())
-    {
-        disableWriteEvent(client_fd);
-        return;
-    }
-    ssize_t bytes_sent = send(client_fd, client.getBufferOut().c_str(), client.getBufferOut().size(), 0);
-    if (bytes_sent > 0)
-    {
-        client.getBufferOut().erase(0, bytes_sent);
-        if (client.getBufferOut().empty())
-            disableWriteEvent(client_fd);
-    }
-    else if (bytes_sent == -1)
-    {
-        if (errno != EAGAIN && errno != EWOULDBLOCK)
-        {
-            std::cerr << "Error: send failed to FD " << client_fd << " (" << strerror(errno) << ")" << std::endl;
-            removeClient(client_fd);
-        }
-    }
-}
-
-void Server::disableWriteEvent(int clients_fd)
-{
-    for (size_t i = 0; i < _poll_fds.size(); ++i)
-    {
-        if (_poll_fds[i].fd == clients_fd)
-        {
-            _poll_fds[i].events &= ~POLLOUT;
-            break;
-        }
-    }
-}
-
-void Server::removeClient(int client_fd)
-{
-    close(client_fd);
-    _clients.erase(client_fd);
-
-    for (std::vector<struct pollfd>::iterator it = _poll_fds.begin(); it != _poll_fds.end(); ++it)
-    {
-        if (it->fd == client_fd)
-        {
-            _poll_fds.erase(it);
-            break;
-        }
-    }
-    std::cout << "Client : " << client_fd << " Remove" << std::endl;
-}
-
-void Server::authenticate(int client_fd) {
-	Client &client = _clients[client_fd];
-
-	if (client.getRightPass() && !client.getUsername().empty() && !client.getNickname().empty())
-	{
-		client.setAuthenticated(true);
-		sendToClient(client_fd, RPL_WELCOME(client.getNickname()));
-	}
-	else
-	{
-		if (!client.getRightPass())
-			sendToClient(client_fd, "Need a password to be fully authenticated (PASS <password>)\r\n");
-		if (client.getUsername().empty())
-			sendToClient(client_fd, "Need an username to be fully authenticated (USER <username> 0 * :<realname>)\r\n");
-		if (client.getNickname().empty())
-			sendToClient(client_fd, "Need a nickname to be fully authenticated (NICK <nickname>)\r\n");
-	}
-}
-
-void Server::leaveChannel(const std::string &channel_name, int client_fd) {
-	_channels[channel_name].removeMember(client_fd);
-	_clients[client_fd].getChannels().erase(channel_name);
-	if (_channels[channel_name].getMembers().empty())
-		_channels.erase(channel_name);
 }
 
 std::vector <std::string> Server::split(const std::string &s, char delimiter)
