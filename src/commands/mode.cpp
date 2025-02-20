@@ -3,29 +3,29 @@
 /*                                                        :::      ::::::::   */
 /*   mode.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:50:18 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/05 11:29:34 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 10:41:31 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-bool Server::mode(std::istringstream &iss, int client_fd) {
+void Server::mode(std::istringstream &iss, int client_fd) {
 	std::string channelOrUser, modes;
 	iss >> channelOrUser >> modes;
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
 		sendToClient(client_fd, ERR_NOTREGISTERED(getNickname(client_fd)));
-		return false;
+		return;
 	}
 
 	if (channelOrUser.empty())
 	{
 		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "MODE"));
-		return true;
+		return;
 	}
 
 	if (channelOrUser[0] == '#')
@@ -33,7 +33,7 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 		if (_channels.find(channelOrUser) == _channels.end())
 		{
 			sendToClient(client_fd, ERR_NOSUCHCHANNEL(getNickname(client_fd), channelOrUser));
-			return true;
+			return;
 		}
 		Channel &chan = _channels[channelOrUser];
 
@@ -69,19 +69,19 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 				response += "\t\t- " + getNickname(*it) + "\r\n";
 
 			sendToClient(client_fd, response);
-			return true;
+			return;
 		}
 
 		if (!chan.isMember(client_fd))
 		{
 			sendToClient(client_fd, ERR_NOTONCHANNEL(getNickname(client_fd), chan.getName()));
-			return false;
+			return;
 		}
 
 		if (!chan.isOperator(client_fd))
 		{
 			sendToClient(client_fd, ERR_CHANOPRIVSNEEDED(getNickname(client_fd), chan.getName()));
-			return false;
+			return;
 		}
 
 		bool add = false;
@@ -218,5 +218,5 @@ bool Server::mode(std::istringstream &iss, int client_fd) {
 		}
 	}
 
-	return true;
+	return;
 }

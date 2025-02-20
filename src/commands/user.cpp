@@ -3,28 +3,29 @@
 /*                                                        :::      ::::::::   */
 /*   user.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/07 17:35:32 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 10:45:47 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-bool Server::user(std::istringstream &iss, int client_fd) {
+void Server::user(std::istringstream &iss, int client_fd)
+{
 	std::string user;
 	std::string realname;
 	iss >> user;
 	if (user.empty())
 	{
 		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "USER"));
-		return true;
+		return;
 	}
 	if (_clients[client_fd].isAuthenticated() || !_clients[client_fd].getUsername().empty())
 	{
 		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
-		return false;
+		return;
 	}
 
 	std::getline(iss, realname);
@@ -34,14 +35,14 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 	if (args.size() < 3)
 	{
 		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "USER"));
-		return true;
+		return;
 	}
 
 	for (size_t i = 0; i < 3; i++) {
 		if ((i == 0 && args[i] != "0") || (i == 1 && args[i] != "*") || (i == 2 && args[i][0] != ':')) {
 			sendToClient(client_fd, ERR_UNKNOWNCOMMAND(getNickname(client_fd), "USER " + realname));
 			authenticate(client_fd);
-			return false;
+			return;
 		}
 	}
 
@@ -67,5 +68,5 @@ bool Server::user(std::istringstream &iss, int client_fd) {
 
 	authenticate(client_fd);
 
-	return true;
+	return;
 }

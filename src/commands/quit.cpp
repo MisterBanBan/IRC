@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   quit.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbaron-t <mbaron-t@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/04 14:38:11 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/04 14:38:11 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 10:44:48 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-bool Server::quit(std::istringstream &iss, int client_fd)
+void Server::quit(std::istringstream &iss, int client_fd)
 {
     std::string quitMsg;
     getline(iss, quitMsg);
@@ -23,5 +23,5 @@ bool Server::quit(std::istringstream &iss, int client_fd)
     for (std::set<std::string>::iterator it = _clients[client_fd].getChannels().begin(); it != _clients[client_fd].getChannels().end(); ++it)
          broadcastToChannel(*it, msg, -1);
     removeClient(client_fd);
-    return true;
+    return;
 }

@@ -6,30 +6,30 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:48:43 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/06 15:49:06 by afavier          ###   ########.fr       */
+/*   Updated: 2025/02/20 10:42:06 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-bool Server::nick(std::istringstream & iss, int client_fd)
+void Server::nick(std::istringstream & iss, int client_fd)
 {
 	std::string nickname;
 	iss >> nickname;
 	if (nickname.empty())
 	{
 		sendToClient(client_fd, ERR_NONICKNAMEGIVEN(getNickname(client_fd)));
-		return true;
+		return;
 	}
 	if (nickname[0] == '#' || nickname[0] == ':' || isdigit(nickname[0]))
 	{
 		sendToClient(client_fd, ERR_ERRONEUSNICKNAME(getNickname(client_fd), nickname));
-		return false;
+		return;
 	}
 	if (nickname.find(" ") != std::string::npos)
 	{
 		sendToClient(client_fd, ERR_ERRONEUSNICKNAME(getNickname(client_fd), nickname));
-		return false;
+		return;
 	}
 	int target_fd = getFdByNickname(nickname);
 	if (target_fd > 0)
@@ -37,7 +37,7 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 		sendToClient(client_fd, ERR_NICKNAMEINUSE(getNickname(client_fd), nickname));
 		if (!_clients[client_fd].isAuthenticated())
 			authenticate(client_fd);
-		return true;
+		return;
 	}
 	_clients[client_fd].setNickname(nickname);
 	std::string response = "Nickname set to " + nickname + "\r\n";
@@ -46,5 +46,5 @@ bool Server::nick(std::istringstream & iss, int client_fd)
 	if (!_clients[client_fd].isAuthenticated())
 		authenticate(client_fd);
 
-	return true;
+	return;
 }

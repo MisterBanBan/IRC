@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arvoyer <arvoyer@student.42.fr>            +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 15:04:07 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/12 12:42:21 by arvoyer          ###   ########.fr       */
+/*   Updated: 2025/02/20 10:46:47 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,19 +55,19 @@ class Server
 		void	authenticate(int client_fd);
 		void	leaveChannel(const std::string & channel_name, int client_fd);
 
-		bool	nick(std::istringstream & iss, int client_fd);
-		bool	user(std::istringstream & iss, int client_fd);
-		bool	pass(std::istringstream & iss, int client_fd);
-		bool	join(std::istringstream & iss, int client_fd);
-		bool	kick(std::istringstream & iss, int client_fd);
-		bool	part(std::istringstream & iss, int client_fd);
-		bool	privmsg(std::istringstream & iss, int client_fd);
-		bool	topic(std::istringstream & iss, int client_fd);
-		bool	invite(std::istringstream & iss, int client_fd);
-		bool	mode(std::istringstream & iss, int client_fd);
-        bool    cap(std::istringstream &iss, int client_fd);
-        bool    who(std::istringstream &iss, int client_fd);
-        bool    quit(std::istringstream &iss, int client_fd);
+		void	nick(std::istringstream & iss, int client_fd);
+		void	user(std::istringstream & iss, int client_fd);
+		void	pass(std::istringstream & iss, int client_fd);
+		void	join(std::istringstream & iss, int client_fd);
+		void	kick(std::istringstream & iss, int client_fd);
+		void	part(std::istringstream & iss, int client_fd);
+		void	privmsg(std::istringstream & iss, int client_fd);
+		void	topic(std::istringstream & iss, int client_fd);
+		void	invite(std::istringstream & iss, int client_fd);
+		void	mode(std::istringstream & iss, int client_fd);
+        void    cap(std::istringstream &iss, int client_fd);
+        void    who(std::istringstream &iss, int client_fd);
+        void    quit(std::istringstream &iss, int client_fd);
         void    processBotMessage(int client_fd, std::string &msg);
         void    stop();
         std::vector<std::string> split(const std::string &s, char delimiter);

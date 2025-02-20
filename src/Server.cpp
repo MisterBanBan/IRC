@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/19 16:36:39 by mtbanban         ###   ########.fr       */
+/*   Updated: 2025/02/20 10:37:33 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,83 +202,31 @@ void Server::clientData(int client_fd)
         iss >> cmd;
 
         if (cmd == "NICK")
-        {
-			if (nick(iss, client_fd))
-				continue;
-			return;
-        }
+            nick(iss, client_fd);
         else if (cmd == "USER")
-        {
-			if (user(iss, client_fd))
-				continue;
-			return;
-        }
+            user(iss, client_fd);
         else if (cmd == "PASS")
-        {
-          if (pass(iss, client_fd))
-			  continue;
-		  return;
-        }
+            pass(iss, client_fd);
         else if (cmd == "JOIN")
-        {
-           if (join(iss, client_fd))
-			   continue;
-			return;
-        }
+            join(iss, client_fd);
         else if (cmd == "KICK")
-        {
-			if (kick(iss, client_fd))
-				continue;
-			return;
-        }
+            kick(iss, client_fd);
         else if(cmd == "PART")
-        {
-           if (part(iss, client_fd))
-			   continue;
-			return;
-        }
+            part(iss, client_fd);
         else if (cmd == "PRIVMSG")
-        {
-            if (privmsg(iss, client_fd))
-				continue;
-			return;
-        }
+            privmsg(iss, client_fd);
         else if (cmd == "TOPIC")
-        {
-			if (topic(iss, client_fd))
-				continue;
-			return;
-        }
+            topic(iss, client_fd);
         else if (cmd == "INVITE")
-        {
-            if (invite(iss, client_fd))
-				continue;
-			return;
-        }
+            invite(iss, client_fd);
         else if (cmd == "MODE")
-        {
-			if (mode(iss, client_fd))
-				continue;
-			return;
-        }
+            mode(iss, client_fd);
         if (cmd == "CAP")
-        {
-            if (cap(iss, client_fd))
-                continue;
-            return;
-        }
+            cap(iss, client_fd);
         else if (cmd == "WHO")
-        {
-            if (who(iss, client_fd))
-                continue;
-            return;
-        }
+            who(iss, client_fd);
         else if (cmd == "QUIT")
-        {
-            if (quit(iss, client_fd))
-                continue;
-            return;
-        }
+            quit(iss, client_fd);
         else
             sendToClient(client_fd, ERR_UNKNOWNCOMMAND(getNickname(client_fd), cmd));
     }

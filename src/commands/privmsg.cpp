@@ -3,29 +3,29 @@
 /*                                                        :::      ::::::::   */
 /*   privmsg.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:52 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/04 12:40:20 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 10:43:45 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-bool Server::privmsg(std::istringstream &iss, int client_fd) {
+void Server::privmsg(std::istringstream &iss, int client_fd) {
 	std::string target;
 	iss >> target;
 
 	if (!_clients[client_fd].isAuthenticated())
 	{
 		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
-		return false;
+		return;
 	}
 
 	if (target.empty())
 	{
 		sendToClient(client_fd, ERR_NORECIPIENT(getNickname(client_fd)));
-		return false;
+		return;
 	}
 
 	if (target == "Bot")
@@ -36,24 +36,24 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
             botMsg.erase(0, 1);
         }
         processBotMessage(client_fd, botMsg);
-        return true;
+        return;
 	}
 
 	if (target == _clients[client_fd].getNickname())
-		return false;
+		return;
 
 	if (target.size() > 0 && target[0] == '#')
 	{
 		if (_channels.find(target) == _channels.end())
 		{
 			sendToClient(client_fd, ERR_NOSUCHCHANNEL(getNickname(client_fd), target));
-			return true;
+			return;
 		}
 
 		if (!_channels[target].isMember(client_fd))
 		{
 			sendToClient(client_fd, ERR_NOTONCHANNEL(getNickname(client_fd), target));
-			return true;
+			return;
 		}
 
 		std::string msg;
@@ -65,23 +65,23 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 				if (msg.empty())
 				{
 					sendToClient(client_fd, ERR_NOTEXTTOSEND(getNickname(client_fd)));
-					return true;
+					return;
 				}
 				std::stringstream response;
 				response << ":" << _clients[client_fd].getNickname() << " PRIVMSG " << target << " " << msg << "\r\n";
 				broadcastToChannel(target, response.str(), client_fd);
-				return true;
+				return;
 			}
 			msg.erase(0, 1);
 		}
 		sendToClient(client_fd, ERR_NOTEXTTOSEND(getNickname(client_fd)));
-		return true;
+		return;
 	}
 	int targetFd = getFdByNickname(target);
 	if (targetFd < 0)
 	{
 		sendToClient(client_fd, ERR_NOSUCHNICK(getNickname(client_fd), target));
-		return true;
+		return;
 	}
 	std::string msg;
 	std::getline(iss, msg);
@@ -93,13 +93,13 @@ bool Server::privmsg(std::istringstream &iss, int client_fd) {
 			if (msg.empty())
 			{
 				sendToClient(client_fd, ERR_NOTEXTTOSEND(getNickname(client_fd)));
-				return true;
+				return;
 			}
 			sendPrivateMessage(client_fd, target, msg);
-			return true;
+			return;
 		}
 		msg.erase(0, 1);
 	}
 	sendToClient(client_fd, ERR_NOTEXTTOSEND(getNickname(client_fd)));
-	return true;
+	return;
 }

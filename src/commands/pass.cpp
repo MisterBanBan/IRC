@@ -3,33 +3,34 @@
 /*                                                        :::      ::::::::   */
 /*   pass.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtbanban <mtbanban@student.42.fr>          +#+  +:+       +#+        */
+/*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 10:49:00 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/03 14:05:40 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/20 10:42:55 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-bool Server::pass(std::istringstream &iss, int client_fd) {
+void Server::pass(std::istringstream &iss, int client_fd)
+{
 	std::string pass;
 	iss >> pass;
 	if (pass.empty())
 	{
 		sendToClient(client_fd, ERR_NEEDMOREPARAMS(getNickname(client_fd), "PASS"));
-		return true;
+		return;
 	}
 	if (_clients[client_fd].isAuthenticated() || _clients[client_fd].getRightPass())
 	{
 		sendToClient(client_fd, ERR_ALREADYREGISTERED(getNickname(client_fd)));
-		return true;
+		return;
 	}
 	if (!isCorrectPasswordServer(pass))
 	{
 		sendToClient(client_fd, ERR_PASSWDMISMATCH(getNickname(client_fd)));
 		removeClient(client_fd);
-		return false;
+		return;
 	}
 
 	_clients[client_fd].setRightPass(true);
@@ -39,5 +40,5 @@ bool Server::pass(std::istringstream &iss, int client_fd) {
 
 	authenticate(client_fd);
 
-	return true;
+	return;
 }
