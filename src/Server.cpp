@@ -6,7 +6,7 @@
 /*   By: afavier <afavier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/17 12:43:53 by mbaron-t          #+#    #+#             */
-/*   Updated: 2025/02/20 15:11:24 by mbaron-t         ###   ########.fr       */
+/*   Updated: 2025/02/21 09:16:21 by afavier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,7 @@ int	Server::initServerSocket(const std::string & port, const std::string & pass)
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(portInt);
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
    if (bind(_server_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         std::cout << "Error: bind failed (" << strerror(errno) << ")" << std::endl;
